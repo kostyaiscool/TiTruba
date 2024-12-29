@@ -1,6 +1,6 @@
 <template>
   <header class="header">
-    <div class="logo">YouTube</div>
+    <div class="logo">ТыТруба</div>
     <SearchBar />
     <div class="user-actions">
       <NotificationBell />
