@@ -1,7 +1,8 @@
 <template>
   <div class="video-page">
     <h1>Video Page</h1>
-    <p>Video ID: {{ id }}</p>
+    <p>Currently viewing video ID: {{ id }}</p>
+    <!-- Загрузка и отображение контента на основе ID -->
   </div>
 </template>
 
@@ -18,6 +19,6 @@ export default {
 
 <style>
 .video-page {
-  padding: 16px;
+  padding: 20px;
 }
 </style>

@@ -2,24 +2,22 @@ from fastapi import FastAPI, APIRouter
 from fastapi.responses import FileResponse
 from starlette.responses import StreamingResponse
 
-from configs import VIDEO_PATH
-
 app = FastAPI()
 router = APIRouter()
 
-
-# @router.get('/watch/{vidid}')
-# async def video_view(vidid: str):
-#     played_video = VIDEO_PATH + '\\' + vidid
-#     return FileResponse(played_video, media_type="video/webm", filename="video.webm")
 @router.get('/watch/{vidid}')
 async def video_view(vidid: str):
-    played_video = VIDEO_PATH + '\\' + vidid
+    if vidid == '1':
+        played_video = "C:\\Users\\ilyab\\PycharmProjects\\TiTruba\\vidosi\\vid1.webm"
+    elif vidid == '2':
+        played_video = "C:\\Users\\ilyab\\PycharmProjects\\TiTruba\\vidosi\\vid2.mp4"
 
-    def iterfile():
-        with open(played_video, mode="rb") as file:
-            yield from file
+    def video_streamer(played_video):
+        with open(played_video, "rb") as video_file:
 
-    return StreamingResponse(iterfile(), media_type="video/webm")
+            while chunk := video_file.read(1024 * 1024):
+        # Читаем по 1MB
+                yield chunk # Возвращаем потоковый ответ
+    return StreamingResponse( video_streamer(played_video), media_type="video/mp4" )
 
 app.include_router(router)

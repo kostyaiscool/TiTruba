@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from api.endpoints import videos
+from endpoints import videos
 
 app = FastAPI()
 app.include_router(videos.router, prefix='/videos')

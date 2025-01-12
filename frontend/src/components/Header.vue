@@ -1,6 +1,6 @@
 <template>
   <header class="header">
-    <div class="logo">ТыТруба</div>
+    <div class="logo"><a href='http://localhost:5173/'>ТыТруба</a></div>
     <SearchBar />
     <div class="user-actions">
       <NotificationBell />

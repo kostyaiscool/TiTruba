@@ -1,19 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import HomePage from '../views/HomeView.vue';
+import Content from '../views/HomeView.vue'; // Если Content.vue теперь маршрут
 import VideoPage from '../views/VideoView.vue';
 
 const routes = [
-  {
-    path: '/',
-    name: 'Home',
-    component: HomePage,
-  },
-  {
-    path: '/video/:id',
-    name: 'Video',
-    component: VideoPage,
-    props: true, // Передаем параметры маршрута как свойства компонента
-  },
+  { path: '/', name: 'Home', component: Content },
+  { path: '/video/:id', name: 'Video', component: VideoPage, props: true },
 ];
 
 const router = createRouter({
