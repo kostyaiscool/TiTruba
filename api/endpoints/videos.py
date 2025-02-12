@@ -8,10 +8,10 @@ router = APIRouter()
 @router.get('/watch/{vidid}')
 async def video_view(vidid: str):
     if vidid == '1':
-        played_video = "D:\\MyProjects\\ti_truba\\vidosi\\vid1.webm"
+        played_video = "C:\\Users\\ilyab\\PycharmProjects\\TiTruba\\vidosi\\vid1.webm"
         media_type = "video/webm"
     elif vidid == '2':
-        played_video = "D:\\MyProjects\\ti_truba\\vidosi\\vid2.mp4"
+        played_video = "C:\\Users\\ilyab\\PycharmProjects\\TiTruba\\vidosi\\vid2.mp4"
         media_type = "video/mp4"
     else:
         return JSONResponse(content={"error": "Invalid video ID"}, status_code=404)

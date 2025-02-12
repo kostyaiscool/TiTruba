@@ -1,9 +1,19 @@
 from fastapi import FastAPI
 from endpoints import videos
-
+import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
+from db.session import init_database
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("start app")
+    await init_database()
+    yield
+    print("end app")
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -16,4 +26,7 @@ app.add_middleware(
 app.include_router(videos.router, prefix='/videos')
 @app.get('/')
 async def home():
-    return {'Ключик': 'IShowSpeed это н'}
+    return {'Ключик': 'IShowSpeed - Лучший стример'}
+
+if __name__ == '__main__':
+    uvicorn.run('main:app', reload=True)
