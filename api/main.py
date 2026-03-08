@@ -1,15 +1,20 @@
+import asyncio
+
 from fastapi import FastAPI
+
+from core.configs import settings
+from db.session import db_helper
 from endpoints import videos
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
-from db.session import init_database
 from contextlib import asynccontextmanager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("start app")
-    await init_database()
+    await db_helper.init_db()
     yield
+    await db_helper.dispose()
     print("end app")
 
 
@@ -28,5 +33,16 @@ app.include_router(videos.router, prefix='/videos')
 async def home():
     return {'Ключик': 'IShowSpeed - Лучший стример'}
 
-if __name__ == '__main__':
-    uvicorn.run('main:app', reload=True)
+async def main():
+    config = uvicorn.Config(
+        app=app,
+        host=settings.run.host,
+        port=settings.run.port,
+        reload=settings.run.reload,
+    )
+    server = uvicorn.Server(config)
+    await server.serve()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
