@@ -1,7 +1,13 @@
 <template>
   <div class="video-card" @click="goToVideo">
-    <img :src="video.thumbnail" alt="Thumbnail" class="thumbnail" />
-    <h3 class="title">{{ video.title }}</h3>
+    <div class="thumbnail-wrapper">
+      <img :src="video.thumbnail" alt="Thumbnail" class="thumbnail" />
+    </div>
+
+    <div class="info">
+      <h3 class="title">{{ video.title }}</h3>
+      <p class="meta">{{ video.public_name }}</p>
+    </div>
   </div>
 </template>
 
@@ -21,24 +27,54 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .video-card {
   cursor: pointer;
-  border: 1px solid #ddd;
-  padding: 8px;
-  border-radius: 8px;
-  text-align: center;
-  transition: transform 0.2s;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
+
 .video-card:hover {
-  transform: scale(1.05);
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
 }
+
+.thumbnail-wrapper {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #000;
+}
+
 .thumbnail {
   width: 100%;
-  border-radius: 8px;
+  height: 100%;
+  object-fit: cover;
 }
+
+.info {
+  padding: 10px;
+  text-align: left;
+}
+
 .title {
-  font-size: 16px;
-  margin-top: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.3;
+
+  /* обрезка длинных заголовков */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.meta {
+  font-size: 12px;
+  color: #777;
+  margin-top: 6px;
 }
 </style>

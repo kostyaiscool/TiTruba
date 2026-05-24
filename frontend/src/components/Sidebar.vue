@@ -4,7 +4,11 @@
       <ul>
         <li>Главная</li>
         <li>Тренды</li>
-        <li>Подписки</li>
+        <li>
+        <router-link to="/subscriptions">
+        Subscriptions
+        </router-link>
+        </li>
         <li>Библиотека</li>
       </ul>
     </nav>

@@ -2,16 +2,16 @@ import axios from "axios";
 import config from "../config";
 export const connection = axios.create({
   baseURL: config.API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
 });
 connection.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
+    console.log(token)
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
   (error) => Promise.reject(error)

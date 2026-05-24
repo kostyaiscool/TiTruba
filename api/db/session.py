@@ -4,8 +4,12 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine, AsyncEngine
 )
 
-from core.base import Base
-from core.configs import settings
+from modules.core.base import Base
+from modules.core.configs import settings
+
+
+# from core.base import Base
+# from core.configs import settings
 
 
 class DatabaseHelper:

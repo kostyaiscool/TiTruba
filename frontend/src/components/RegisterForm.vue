@@ -1,66 +1,77 @@
 <template>
   <div class="register-form">
     <input
+      type="email"
+      placeholder="Email"
+      class="register-input"
+      v-model="email"
+    />
+
+    <input
       type="text"
       placeholder="Username"
       class="register-input"
       v-model="username"
     />
+
     <input
       type="password"
       placeholder="Password"
       class="register-input"
       v-model="password"
     />
-    <button class="register-button" @click="handleRegister">
-      Register
+
+    <button class="register-button" @click="handleRegister" :disabled="loading">
+      {{ loading ? "Loading..." : "Register" }}
     </button>
+
+    <p v-if="error" class="error">{{ error }}</p>
   </div>
 </template>
 
 <script>
+import connection from "../api";
+
 export default {
-  name: "RegisterForm",
   data() {
     return {
+      email: "",
       username: "",
       password: "",
+      loading: false,
+      error: null,
     };
   },
   methods: {
-    handleRegister() {
-      console.log("Username:", this.username);
-      console.log("Password:", this.password);
-      // тут потом добавишь API-запрос
+    async handleRegister() {
+      this.loading = true;
+      this.error = null;
+
+      try {
+        const response = await connection.post("/auth/auth/register", {
+          email: this.email,
+          password: this.password,
+          username: this.username
+        });
+
+        const token = response.data.token;
+
+        if (token) {
+          localStorage.setItem("token", token);
+          connection.defaults.headers.common[
+            "Authorization"
+          ] = `Bearer ${token}`;
+        }
+
+        this.$router.push("/");
+      } catch (err) {
+        console.error(err);
+        this.error =
+          err.response?.data?.detail || "Ошибка регистрации";
+      } finally {
+        this.loading = false;
+      }
     },
   },
 };
 </script>
-
-<style>
-.register-form {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 220px;
-}
-
-.register-input {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.register-button {
-  padding: 8px 12px;
-  background-color: #f00;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.register-button:hover {
-  background-color: #c00;
-}
-</style>

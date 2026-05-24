@@ -1,57 +1,48 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
-import axios from 'axios';
+import { ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
 
-const route = useRoute(); // Получение ID из маршрута
-const videoId = ref(route.params.id); // ID видео
-const videoUrl = ref(null); // Ссылка на поток видео
-const isLoading = ref(true); // Флаг загрузки
-const error = ref(null); // Флаг ошибки
+import connection from "@/api";
+import VideoPlayer from "@/components/VideoPlayer.vue";
 
-onMounted(async () => {
+const route = useRoute();
+
+const videoId = Number(route.params.id);
+
+const author = ref("Unknown");
+
+const loadAuthor = async () => {
   try {
-    const response = await axios.get(`http://localhost:8000/videos/watch/${videoId.value}`, {
-      responseType: 'blob', // Получение данных как blob
-    });
-    videoUrl.value = URL.createObjectURL(response.data); // Создание локальной ссылки на видео
+    const response = await connection.get(
+      `/videos/info/${videoId}`
+    );
+
+    author.value =
+      response.data.author;
+
   } catch (err) {
-    error.value = 'Failed to load video.';
     console.error(err);
-  } finally {
-    isLoading.value = false;
   }
-});
+};
+
+onMounted(loadAuthor);
 </script>
 
 <template>
   <div class="video-page">
-    <div v-if="isLoading" class="loading">
-      <p>Loading video...</p>
-    </div>
-    <div v-else-if="error" class="error">
-      <p>{{ error }}</p>
-    </div>
-    <div v-else>
-      <video class="video-player" controls autoplay>
-        <source :src="videoUrl" type="video/webm" />
-        Your browser does not support the video tag.
-      </video>
-    </div>
+
+    <VideoPlayer
+      :video-id="videoId"
+      :author="author"
+    />
+
   </div>
 </template>
 
-<style>
+<style scoped>
 .video-page {
-  padding: 16px;
-}
-.video-player {
-  width: 100%;
-  max-width: 800px;
-  margin-bottom: 16px;
-}
-.loading, .error {
-  text-align: center;
-  padding: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
 }
 </style>

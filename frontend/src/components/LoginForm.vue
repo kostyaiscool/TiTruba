@@ -12,32 +12,64 @@
       class="login-input"
       v-model="password"
     />
-    <button class="login-button" @click="handleLogin">
-      Login
+
+    <button class="login-button" @click="handleLogin" :disabled="loading">
+      {{ loading ? "Loading..." : "Login" }}
     </button>
+
+    <p v-if="error" class="error">{{ error }}</p>
   </div>
 </template>
 
 <script>
+import connection from "../api";
+import { useAuth } from "@/composables/useAuth";
 export default {
   name: "LoginForm",
   data() {
     return {
       username: "",
       password: "",
+      loading: false,
+      error: null,
     };
   },
   methods: {
-    handleLogin() {
-      console.log("Username:", this.username);
-      console.log("Password:", this.password);
-      // тут потом добавишь API-запрос
+    async handleLogin() {
+  this.loading = true;
+  this.error = null;
+
+  try {
+    const formData = new FormData();
+    formData.append("username", this.username);
+    formData.append("password", this.password);
+
+    const response = await connection.post(
+      "/auth/auth/login",
+      formData
+    );
+
+    const token = response.data.access_token;
+
+    const { login } = useAuth();
+
+    await login(token);
+    this.$router.push("/");
+    connection.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+    this.$router.push("/");
+  } catch (err) {
+    console.error(err);
+    this.error = "Неверный логин или пароль";
+  } finally {
+    this.loading = false;
+  }
     },
   },
 };
 </script>
 
-<style>
+<style scoped>
 .login-form {
   display: flex;
   flex-direction: column;
@@ -62,5 +94,10 @@ export default {
 
 .login-button:hover {
   background-color: #c00;
+}
+
+.error {
+  color: #c00;
+  font-size: 14px;
 }
 </style>

@@ -2,12 +2,17 @@ import asyncio
 
 from fastapi import FastAPI
 
-from core.configs import settings
+# from auth.routers.endpoints import auth_router
+# from core.configs import settings
 from db.session import db_helper
-from endpoints import videos
+from endpoints import videos, users, subscribers
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+
+from modules.auth.routers.endpoints import auth_router
+from modules.core.configs import settings
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -29,6 +34,9 @@ app.add_middleware(
 )
 
 app.include_router(videos.router, prefix='/videos')
+app.include_router(auth_router, prefix="/auth")
+app.include_router(users.router)
+app.include_router(subscribers.router, prefix='/subscribers')
 @app.get('/')
 async def home():
     return {'Ключик': 'IShowSpeed - Лучший стример'}
