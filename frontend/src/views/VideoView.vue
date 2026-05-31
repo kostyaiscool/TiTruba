@@ -7,25 +7,24 @@ import VideoPlayer from "@/components/VideoPlayer.vue";
 
 const route = useRoute();
 
-const videoId = Number(route.params.id);
+const videoId = route.params.id;
 
-const author = ref("Unknown");
+const video = ref(null);
 
-const loadAuthor = async () => {
+const loadVideo = async () => {
   try {
     const response = await connection.get(
-      `/videos/info/${videoId}`
+      `/videos/video_info/${videoId}`
     );
 
-    author.value =
-      response.data.author;
+    video.value = response.data;
 
   } catch (err) {
     console.error(err);
   }
 };
 
-onMounted(loadAuthor);
+onMounted(loadVideo);
 </script>
 
 <template>

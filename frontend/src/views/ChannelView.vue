@@ -1,47 +1,71 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 import connection from "@/api";
 
 const route = useRoute();
+const router = useRouter();
 
 const videos = ref([]);
 
 const loading = ref(true);
+const error = ref(null);
 
 const authorId = route.params.id;
 
 const loadVideos = async () => {
   try {
-    const response =
-      await connection.get(
-        `/videos/get_video_by_author/${authorId}`
-      );
+    const response = await connection.get(
+      `/videos/get_video_by_author/${authorId}`
+    );
 
     videos.value = response.data;
 
   } catch (err) {
     console.error(err);
 
+    error.value =
+      "Не удалось загрузить канал";
+
   } finally {
     loading.value = false;
   }
+};
+
+const openVideo = (id) => {
+  router.push(`/video/${id}`);
 };
 
 onMounted(loadVideos);
 </script>
 
 <template>
-
   <div class="channel-page">
 
-    <h1>
-      Channel
+    <h1 class="channel-title">
+      Channel #{{ authorId }}
     </h1>
 
-    <div v-if="loading">
+    <div
+      v-if="loading"
+      class="status"
+    >
       Loading...
+    </div>
+
+    <div
+      v-else-if="error"
+      class="status error"
+    >
+      {{ error }}
+    </div>
+
+    <div
+      v-else-if="videos.length === 0"
+      class="status"
+    >
+      На канале пока нет видео
     </div>
 
     <div
@@ -49,16 +73,34 @@ onMounted(loadVideos);
       class="videos-grid"
     >
 
-      <VideoCard
+      <div
         v-for="video in videos"
         :key="video.id"
-        :video="video"
-      />
+        class="video-card"
+        @click="openVideo(video.id)"
+      >
+
+        <div class="thumbnail">
+          🎥
+        </div>
+
+        <div class="video-info">
+
+          <div class="video-title">
+            {{ video.public_name }}
+          </div>
+
+          <div class="video-author">
+            {{ video.author }}
+          </div>
+
+        </div>
+
+      </div>
 
     </div>
 
   </div>
-
 </template>
 
 <style scoped>
@@ -66,52 +108,68 @@ onMounted(loadVideos);
   padding: 24px;
 }
 
-.channel-header {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-
-  margin-bottom: 30px;
+.channel-title {
+  margin-bottom: 24px;
+  font-size: 32px;
+  font-weight: bold;
 }
 
-.channel-avatar {
-  width: 82px;
-  height: 82px;
+.videos-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(280px, 1fr)
+  );
+  gap: 20px;
+}
 
-  border-radius: 50%;
+.video-card {
+  cursor: pointer;
 
-  background: red;
-  color: white;
+  border-radius: 12px;
+  overflow: hidden;
+
+  background: #fff;
+
+  box-shadow:
+    0 2px 8px rgba(0,0,0,.1);
+
+  transition: .2s;
+}
+
+.video-card:hover {
+  transform: translateY(-3px);
+}
+
+.thumbnail {
+  height: 160px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  font-size: 32px;
+  font-size: 48px;
+
+  background: #eee;
+}
+
+.video-info {
+  padding: 12px;
+}
+
+.video-title {
   font-weight: bold;
+  margin-bottom: 6px;
 }
 
-.channel-name {
-  font-size: 32px;
-  font-weight: bold;
-}
-
-.channel-subtitle {
-  color: #777;
-}
-
-.videos-grid {
-  display: grid;
-
-  grid-template-columns:
-    repeat(auto-fill, minmax(260px, 1fr));
-
-  gap: 20px;
+.video-author {
+  color: #666;
+  font-size: 14px;
 }
 
 .status {
-  padding: 40px;
   text-align: center;
+  padding: 40px;
 }
 
 .error {

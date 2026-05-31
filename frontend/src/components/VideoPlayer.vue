@@ -3,7 +3,7 @@ import { computed, ref } from "vue";
 import connection from "@/api";
 
 /*
-  👇 props СНАЧАЛА
+  👇 props
 */
 const props = defineProps({
   videoId: {
@@ -14,6 +14,26 @@ const props = defineProps({
   author: {
     type: String,
     default: "Unknown",
+  },
+
+  title: {
+    type: String,
+    default: "Без названия",
+  },
+
+  description: {
+    type: String,
+    default: "",
+  },
+
+  views: {
+    type: Number,
+    default: 0,
+  },
+
+  createdAt: {
+    type: String,
+    default: "",
   },
 });
 
@@ -43,6 +63,17 @@ const videoUrl = computed(() => {
 });
 
 /*
+  📅 формат даты
+*/
+const formatDate = (date) => {
+  if (!date) return "";
+
+  return new Date(date).toLocaleDateString(
+    "ru-RU"
+  );
+};
+
+/*
   🔔 состояние подписки
 */
 const isSubscribed = ref(false);
@@ -52,9 +83,6 @@ const isSubscribed = ref(false);
 */
 const toggleSubscribe = async () => {
   try {
-    /*
-      ❗ защита на уровне фронта (UI)
-    */
     if (isOwnChannel.value) return;
 
     await connection.post(
@@ -68,12 +96,14 @@ const toggleSubscribe = async () => {
     console.error(err);
   }
 };
+console.log("будь острым как денчик - освежайся отсрым перцом")
+console.log(props)
 </script>
 
 <template>
   <div class="video-wrapper">
 
-    <!-- 🎥 video -->
+    <!-- 🎥 video -->.0
     <video
       class="video-player"
       controls
@@ -84,6 +114,25 @@ const toggleSubscribe = async () => {
         type="video/mp4"
       />
     </video>
+
+    <!-- 📝 title -->
+    <h1 class="video-title">
+      {{ props.title }}
+    </h1>
+
+    <!-- 👀 stats -->
+    <div class="video-stats">
+
+      <span>
+        👀 {{ props.views }} просмотров
+      </span>
+
+      <span v-if="props.createdAt">
+        •
+        📅 {{ formatDate(props.createdAt) }}
+      </span>
+
+    </div>
 
     <!-- 👤 meta -->
     <div class="video-meta">
@@ -129,6 +178,14 @@ const toggleSubscribe = async () => {
 
     </div>
 
+    <!-- 📄 description -->
+    <div
+      v-if="props.description"
+      class="description-box"
+    >
+      {{ props.description }}
+    </div>
+
   </div>
 </template>
 
@@ -142,6 +199,20 @@ const toggleSubscribe = async () => {
   max-height: 700px;
   border-radius: 16px;
   background: black;
+}
+
+.video-title {
+  margin-top: 16px;
+  font-size: 26px;
+  font-weight: bold;
+}
+
+.video-stats {
+  margin-top: 8px;
+  color: #777;
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
 }
 
 .video-meta {
@@ -193,5 +264,14 @@ const toggleSubscribe = async () => {
 .subscribe-btn.subscribed {
   background: #ddd;
   color: #333;
+}
+
+.description-box {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #f5f5f5;
+  white-space: pre-wrap;
+  line-height: 1.5;
 }
 </style>
