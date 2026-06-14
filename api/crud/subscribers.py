@@ -6,8 +6,8 @@ from models.subscribers import Subscriber
 
 class SubscriberCRUD():
     @staticmethod
-    async def get_subscribers(session: AsyncSession, user: int):
-        subscribers = await session.execute(select(Subscriber).where(Subscriber.subscribed_to == user))
+    async def get_subscribers(session: AsyncSession, user: UserRead):
+        subscribers = await session.execute(select(Subscriber).where(Subscriber.subscriber_id == user.id))
         return subscribers.scalars().all()
 
     @staticmethod

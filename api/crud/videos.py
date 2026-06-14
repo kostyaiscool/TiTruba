@@ -4,27 +4,43 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import UploadFile, Depends
-from sqlalchemy import select
+from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from crud.users import UserCRUD
 from db.session import db_helper
+from models.history import History
 from models.vidosi import Vidos
+from modules.auth.models.user import User
 from schemas.vidos import VidosCreate
-from users.models.user import User
 
 VIDEO_DIR = Path("media/videos")
 VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 
 class VideoCRUD():
     @staticmethod
-    async def get_videos(db: AsyncSession):
-        videos = await db.execute(select(Vidos))
-        return videos.scalars().all()
+    async def get_videos(
+            db: AsyncSession,
+            page: int,
+            per_page: int = 24,
+    ):
+        offset = (page - 1) * per_page
+
+        result = await db.execute(
+            select(Vidos)
+            .order_by(Vidos.created_at.desc())
+            .offset(offset)
+            .limit(per_page)
+        )
+
+        return result.scalars().all()
 
     @staticmethod
     async def get_video(db: AsyncSession, id: int):
         video = await db.execute(select(Vidos).where(Vidos.id == id))
-        return video.scalars().one()
+        video = video.scalars().one()
+        await db.commit()
+        return video
 
     # @staticmethod
     # async def create(db: AsyncSession, video_data: VidosCreate):
@@ -80,21 +96,31 @@ class VideoCRUD():
             author_id: int,
             session: AsyncSession,
     ):
-        # print()
-        print(type(User))
         print(User)
-        user_result = await session.execute(
-            select(User).where(
-                User.id == author_id
-            )
-        )
-
-        user = user_result.scalars().one()
+        # user_result = await session.execute(
+        #     select(User).where(
+        #         User.id == author_id
+        #     )
+        # )
+        #
+        # user = user_result.scalars().one()
+        user = await UserCRUD.get_user_by_id(session, author_id)
         print(user)
         videos_result = await session.execute(
             select(Vidos).where(
                 Vidos.author == user.username
             )
         )
+        videos = videos_result.scalars().all()
+        print(videos)
+        return videos
 
-        return videos_result.scalars().all()
+    @staticmethod
+    async def add_history(session, user_id, video_id):
+        history = History(
+            viewer_id=user_id,
+            video_id=video_id,
+        )
+        result = await session.add(history)
+        session.commit()
+        return result

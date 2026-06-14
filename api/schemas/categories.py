@@ -1,4 +1,4 @@
 from pydantic import BaseModel
-class Vidos(BaseModel):
+class Category(BaseModel):
     id: int
     name: str

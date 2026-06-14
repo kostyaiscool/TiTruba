@@ -2,7 +2,7 @@ from fastapi_users import FastAPIUsers
 
 from modules.auth.backend import auth_backend
 from modules.auth.dependencies.user_manager import get_user_manager
-from users.models.user import User
+from modules.auth.models.user import User
 
 # from auth.backend import auth_backend
 # from auth.dependencies.user_manager import get_user_manager

@@ -1,8 +1,8 @@
 from pydantic import BaseModel, DirectoryPath, PastDatetime
 
-from auth.schemas.user import UserRead
+from modules.auth.schemas.user import UserRead
 
 
-class Vidos(BaseModel):
+class Subscriber(BaseModel):
     subscriber: UserRead
     subscriben: UserRead
