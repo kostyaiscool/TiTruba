@@ -4,10 +4,10 @@ from fastapi_users import BaseUserManager
 from fastapi_users.exceptions import UserAlreadyVerified
 from starlette.requests import Request
 
-from api.modules.auth.backend import auth_backend
-from api.modules.auth.dependencies.user_manager import get_user_manager
-from api.modules.auth.routers.fastapi_users_endpoints import fastapi_users_routers
-from api.modules.auth.schemas.user import UserCreate, UserRead
+from modules.auth.backend import auth_backend
+from modules.auth.dependencies.user_manager import get_user_manager
+from modules.auth.routers.fastapi_users_endpoints import fastapi_users_routers
+from modules.auth.schemas.user import UserCreate, UserRead
 
 http_bearer = HTTPBearer(auto_error=False)
 

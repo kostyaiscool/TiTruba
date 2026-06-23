@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from api.db.session import Base
+from db.session import Base
 if TYPE_CHECKING:
     from modules.auth.models.user import User
     from models.vidosi import Vidos
@@ -30,7 +30,7 @@ class Likes(Base):
     )
 
     video_id: Mapped[int] = mapped_column(
-        ForeignKey("vidos.id", ondelete="CASCADE")
+        ForeignKey("vidoss.id", ondelete="CASCADE")
     )
 
     rating: Mapped[bool] = mapped_column(Boolean)
