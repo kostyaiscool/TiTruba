@@ -1,7 +1,7 @@
 from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.orm import declarative_base, Mapped, mapped_column, relationship
 
-from api.db.session import Base
+from db.session import Base
 from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
@@ -22,6 +22,6 @@ class Vidos(Base):
     # like_id: Mapped[int] = mapped_column(ForeignKey("likess.id"))
     # likes: Mapped["Likes"] = relationship(back_populates="users")
     likes: Mapped[List["Likes"]] = relationship(
-        back_populates="vidoss",
+        back_populates="video",
         cascade="all, delete-orphan",
     )

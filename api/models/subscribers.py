@@ -1,7 +1,7 @@
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from api.db.session import Base
+from db.session import Base
 from modules.auth.models.user import User
 
 

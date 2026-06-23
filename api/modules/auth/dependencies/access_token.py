@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import Depends
 
-from api.modules.auth.models.access_token import AccessToken
+from modules.auth.models.access_token import AccessToken
 from db.session import db_helper
 
 if TYPE_CHECKING:
