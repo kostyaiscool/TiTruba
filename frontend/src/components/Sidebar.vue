@@ -1,3 +1,6 @@
+<script setup>
+const userId = localStorage.getItem("user_id");
+</script>
 <template>
   <aside class="sidebar">
     <nav>
@@ -10,6 +13,11 @@
         </router-link>
         </li>
         <li>Библиотека</li>
+        <li>
+        <router-link :to="`/history/${userId}`">
+  History
+</router-link>
+        </li>
       </ul>
     </nav>
   </aside>

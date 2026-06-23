@@ -55,6 +55,8 @@ async def video_upload(
     description: str = Form(...)
 ):
     author_name = current_user.username
+    print(current_user)
+    print(author_name)
     video = await VideoCRUD.save_video(
         db,
         video,

@@ -1,109 +1,70 @@
 <script setup>
-import { computed, ref } from "vue";
+import { ref, computed, onMounted } from "vue";
 import connection from "@/api";
 
-/*
-  👇 props
-*/
 const props = defineProps({
   videoId: {
     type: [String, Number],
     required: true,
   },
-
-  author: {
-    type: String,
-    default: "Unknown",
-  },
-
-  title: {
-    type: String,
-    default: "Без названия",
-  },
-
-  description: {
-    type: String,
-    default: "",
-  },
-
-  views: {
-    type: Number,
-    default: 0,
-  },
-
-  createdAt: {
-    type: String,
-    default: "",
-  },
 });
 
-/*
-  👇 текущий пользователь
-*/
 const currentUser = ref(
   localStorage.getItem("username")
 );
 
-/*
-  👇 защита от подписки на себя
-*/
-const isOwnChannel = computed(() => {
-  return (
-    currentUser.value &&
-    props.author &&
-    currentUser.value === props.author
-  );
-});
+const videoInfo = ref(null);
 
-/*
-  🎥 видео URL
-*/
+const isSubscribed = ref(false);
+
 const videoUrl = computed(() => {
   return `http://localhost:8000/videos/watch/${props.videoId}`;
 });
 
-/*
-  📅 формат даты
-*/
-const formatDate = (date) => {
-  if (!date) return "";
-
-  return new Date(date).toLocaleDateString(
-    "ru-RU"
+const isOwnChannel = computed(() => {
+  return (
+    currentUser.value &&
+    videoInfo.value?.author &&
+    currentUser.value === videoInfo.value.author
   );
+});
+
+const loadVideoInfo = async () => {
+  try {
+    const response = await connection.get(
+      `/videos/video_info/${props.videoId}`
+    );
+
+    videoInfo.value = response.data;
+
+    console.log(response.data);
+  } catch (err) {
+    console.error(err);
+  }
 };
 
-/*
-  🔔 состояние подписки
-*/
-const isSubscribed = ref(false);
-
-/*
-  🔔 подписка
-*/
 const toggleSubscribe = async () => {
   try {
     if (isOwnChannel.value) return;
 
     await connection.post(
-      `/subscribers/subscribe/${props.author}`
+      `/subscribers/subscribe/${videoInfo.value.author}`
     );
 
-    isSubscribed.value =
-      !isSubscribed.value;
-
+    isSubscribed.value = !isSubscribed.value;
   } catch (err) {
     console.error(err);
   }
 };
-console.log("будь острым как денчик - освежайся отсрым перцом")
-console.log(props)
+
+onMounted(loadVideoInfo);
 </script>
 
 <template>
-  <div class="video-wrapper">
-
-    <!-- 🎥 video -->.0
+  <div
+    v-if="videoInfo"
+    class="video-wrapper"
+  >
     <video
       class="video-player"
       controls
@@ -115,33 +76,21 @@ console.log(props)
       />
     </video>
 
-    <!-- 📝 title -->
     <h1 class="video-title">
-      {{ props.title }}
+      {{ videoInfo.title }}
     </h1>
 
-    <!-- 👀 stats -->
     <div class="video-stats">
-
-      <span>
-        👀 {{ props.views }} просмотров
-      </span>
-
-      <span v-if="props.createdAt">
-        •
-        📅 {{ formatDate(props.createdAt) }}
-      </span>
-
+      👁 {{ videoInfo.views }} просмотров
     </div>
 
-    <!-- 👤 meta -->
     <div class="video-meta">
 
       <div class="author-info">
 
         <div class="avatar">
           {{
-            props.author?.[0]
+            videoInfo.author?.[0]
               ?.toUpperCase()
           }}
         </div>
@@ -149,18 +98,21 @@ console.log(props)
         <div>
 
           <div class="author-name">
-            {{ props.author }}
+            {{ videoInfo.author }}
           </div>
 
-          <div class="subscribers">
-            channel
+          <div class="video-date">
+            {{
+              new Date(
+                videoInfo.created_at
+              ).toLocaleDateString()
+            }}
           </div>
 
         </div>
 
       </div>
 
-      <!-- 🔔 -->
       <button
         v-if="!isOwnChannel"
         class="subscribe-btn"
@@ -178,12 +130,8 @@ console.log(props)
 
     </div>
 
-    <!-- 📄 description -->
-    <div
-      v-if="props.description"
-      class="description-box"
-    >
-      {{ props.description }}
+    <div class="description-box">
+      {{ videoInfo.description }}
     </div>
 
   </div>
@@ -197,26 +145,27 @@ console.log(props)
 .video-player {
   width: 100%;
   max-height: 700px;
+
   border-radius: 16px;
   background: black;
 }
 
 .video-title {
-  margin-top: 16px;
-  font-size: 26px;
+  margin-top: 18px;
+
+  font-size: 24px;
   font-weight: bold;
 }
 
 .video-stats {
   margin-top: 8px;
-  color: #777;
-  display: flex;
-  gap: 8px;
-  font-size: 14px;
+
+  color: #666;
 }
 
 .video-meta {
-  margin-top: 18px;
+  margin-top: 20px;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -229,35 +178,42 @@ console.log(props)
 }
 
 .avatar {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
+
   border-radius: 50%;
+
   background: red;
   color: white;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+
   font-weight: bold;
+  font-size: 20px;
 }
 
 .author-name {
-  font-size: 16px;
   font-weight: bold;
 }
 
-.subscribers {
-  font-size: 13px;
+.video-date {
   color: #777;
+  font-size: 13px;
 }
 
 .subscribe-btn {
   padding: 10px 18px;
+
   border: none;
   border-radius: 999px;
+
   background: red;
   color: white;
+
   cursor: pointer;
+
   font-weight: bold;
 }
 
@@ -267,11 +223,14 @@ console.log(props)
 }
 
 .description-box {
-  margin-top: 18px;
+  margin-top: 20px;
+
   padding: 16px;
+
   border-radius: 12px;
+
   background: #f5f5f5;
+
   white-space: pre-wrap;
-  line-height: 1.5;
 }
 </style>

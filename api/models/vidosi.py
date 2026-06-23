@@ -2,7 +2,8 @@ from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.orm import declarative_base, Mapped, mapped_column, relationship
 
 from api.db.session import Base
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
+
 if TYPE_CHECKING:
     from models.likes import Likes
 
@@ -16,7 +17,11 @@ class Vidos(Base):
     file_size: Mapped[int] = mapped_column(Integer)
     content_type: Mapped[str] = mapped_column(String(100))
     views: Mapped[int] = mapped_column(Integer, default=0)
-    likes_c: Mapped[int] = mapped_column(Integer, default=0)
-    dislikes_c: Mapped[int] = mapped_column(Integer, default=0)
-    like_id: Mapped[int] = mapped_column(ForeignKey("likess.id"))
-    likes: Mapped["Likes"] = relationship(back_populates="users")
+    # likes_c: Mapped[int] = mapped_column(Integer, default=0)
+    # dislikes_c: Mapped[int] = mapped_column(Integer, default=0)
+    # like_id: Mapped[int] = mapped_column(ForeignKey("likess.id"))
+    # likes: Mapped["Likes"] = relationship(back_populates="users")
+    likes: Mapped[List["Likes"]] = relationship(
+        back_populates="vidoss",
+        cascade="all, delete-orphan",
+    )

@@ -1,129 +1,186 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import connection from "../api";
-import VideoCard from "../components/VideoCard.vue";
+import connection from "@/api";
 
 const videos = ref([]);
-const loading = ref(true);
-const error = ref(null);
+const page = ref(1);
+const loading = ref(false);
 
-const fetchVideos = async () => {
+const loadVideos = async () => {
   try {
-    const response = await connection.get("/videos/videos");
+    loading.value = true;
+
+    const response = await connection.get(
+      `/videos/videos/${page.value}`
+    );
+
     videos.value = response.data;
+
   } catch (err) {
-    error.value = "Не удалось загрузить видео 😢";
     console.error(err);
   } finally {
     loading.value = false;
   }
 };
 
-onMounted(fetchVideos);
+const nextPage = async () => {
+  page.value++;
+  await loadVideos();
+};
+
+const prevPage = async () => {
+  if (page.value <= 1) return;
+
+  page.value--;
+  await loadVideos();
+};
+
+onMounted(loadVideos);
 </script>
 
 <template>
-  <main class="page">
-    <div class="container">
-      
-      <!-- Skeleton loading -->
-      <div v-if="loading" class="videos-grid">
-        <div v-for="n in 8" :key="n" class="skeleton-card"></div>
-      </div>
+  <div class="video-list">
 
-      <!-- Error -->
-      <div v-else-if="error" class="error">
-        {{ error }}
-      </div>
+    <div
+      v-if="loading"
+      class="loading"
+    >
+      Загрузка...
+    </div>
 
-      <!-- Videos -->
-      <div v-else class="videos-grid">
-        <VideoCard
-          v-for="video in videos"
-          :key="video.id"
-          :video="video"
-        />
-      </div>
+    <div
+      v-else
+      class="videos-grid"
+    >
+
+      <router-link
+        v-for="video in videos"
+        :key="video.id"
+        :to="`/video/${video.id}`"
+        class="video-card"
+      >
+
+        <video
+          class="preview-video"
+          muted
+          preload="metadata"
+        >
+          <source
+            :src="`http://localhost:8000/videos/watch/${video.id}`"
+            :type="video.content_type || 'video/mp4'"
+          />
+        </video>
+
+        <div class="video-info">
+
+          <div class="video-title">
+            {{ video.public_name }}
+          </div>
+
+          <div class="video-author">
+            {{ video.author }}
+          </div>
+
+        </div>
+
+      </router-link>
 
     </div>
-  </main>
+
+    <div class="pagination">
+
+      <button
+        @click="prevPage"
+        :disabled="page === 1"
+      >
+        ← Назад
+      </button>
+
+      <span>
+        Страница {{ page }}
+      </span>
+
+      <button
+        @click="nextPage"
+      >
+        Вперёд →
+      </button>
+
+    </div>
+
+  </div>
 </template>
 
 <style scoped>
-.page {
-  background: #f9f9f9;
-  min-height: 100vh;
+.video-list {
+  width: 100%;
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+.loading {
+  text-align: center;
+  padding: 40px;
 }
 
 .videos-grid {
   display: grid;
+  grid-template-columns:
+    repeat(auto-fill, minmax(320px, 1fr));
+
   gap: 20px;
-  grid-template-columns: repeat(6, 1fr);
 }
 
-/* ноуты */
-@media (max-width: 1400px) {
-  .videos-grid {
-    grid-template-columns: repeat(5, 1fr);
-  }
+.video-card {
+  text-decoration: none;
+  color: inherit;
 }
 
-/* планшеты */
-@media (max-width: 1100px) {
-  .videos-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-/* маленькие */
-@media (max-width: 800px) {
-  .videos-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* телефоны */
-@media (max-width: 500px) {
-  .videos-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* Skeleton */
-.skeleton-card {
+.preview-video {
   width: 100%;
-  aspect-ratio: 16 / 12;
+  height: 220px;
+
+  object-fit: cover;
+
   border-radius: 12px;
-  background: linear-gradient(
-    90deg,
-    #eee 25%,
-    #ddd 37%,
-    #eee 63%
-  );
-  background-size: 400% 100%;
-  animation: shimmer 1.4s infinite;
+
+  background: black;
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: -100% 0;
-  }
+.video-info {
+  margin-top: 10px;
 }
 
-/* Error */
-.error {
-  text-align: center;
-  color: #c00;
-  font-size: 18px;
-  margin-top: 40px;
+.video-title {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.video-author {
+  margin-top: 4px;
+
+  font-size: 14px;
+  color: #777;
+}
+
+.pagination {
+  margin-top: 30px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.pagination button {
+  padding: 8px 14px;
+
+  border: none;
+  border-radius: 8px;
+
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 </style>

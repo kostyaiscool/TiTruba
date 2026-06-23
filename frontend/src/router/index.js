@@ -7,6 +7,7 @@ import ProfileView from '../views/ProfileView.vue'
 import UploadView from "../views/UploadView.vue";
 import SubscriptionsView from "../views/SubscriptionsView.vue";
 import ChannelView from "../views/ChannelView.vue"
+import HistoryView from "../views/HistoryView.vue"
 
 const routes = [
   { path: '/', name: 'Home', component: HomeView },
@@ -17,6 +18,7 @@ const routes = [
   { path: '/upload', name: 'Upload', component: UploadView},
   { path: "/subscriptions", component: SubscriptionsView},
   { path: "/channel/:id", component: ChannelView},
+  { path: "/history/:user_id", component: HistoryView},
 ];
 
 const router = createRouter({

@@ -6,6 +6,7 @@
       class="login-input"
       v-model="username"
     />
+
     <input
       type="password"
       placeholder="Password"
@@ -13,19 +14,30 @@
       v-model="password"
     />
 
-    <button class="login-button" @click="handleLogin" :disabled="loading">
+    <button
+      class="login-button"
+      @click="handleLogin"
+      :disabled="loading"
+    >
       {{ loading ? "Loading..." : "Login" }}
     </button>
 
-    <p v-if="error" class="error">{{ error }}</p>
+    <p
+      v-if="error"
+      class="error"
+    >
+      {{ error }}
+    </p>
   </div>
 </template>
 
 <script>
 import connection from "../api";
 import { useAuth } from "@/composables/useAuth";
+
 export default {
   name: "LoginForm",
+
   data() {
     return {
       username: "",
@@ -34,36 +46,73 @@ export default {
       error: null,
     };
   },
+
   methods: {
     async handleLogin() {
-  this.loading = true;
-  this.error = null;
+      this.loading = true;
+      this.error = null;
 
-  try {
-    const formData = new FormData();
-    formData.append("username", this.username);
-    formData.append("password", this.password);
+      try {
+        const formData = new FormData();
 
-    const response = await connection.post(
-      "/auth/auth/login",
-      formData
-    );
+        formData.append(
+          "username",
+          this.username
+        );
 
-    const token = response.data.access_token;
+        formData.append(
+          "password",
+          this.password
+        );
 
-    const { login } = useAuth();
+        const response = await connection.post(
+          "/auth/auth/login",
+          formData
+        );
 
-    await login(token);
-    this.$router.push("/");
-    connection.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        const token =
+          response.data.access_token;
 
-    this.$router.push("/");
-  } catch (err) {
-    console.error(err);
-    this.error = "Неверный логин или пароль";
-  } finally {
-    this.loading = false;
-  }
+        const { login } = useAuth();
+
+        await login(token);
+
+        connection.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${token}`;
+
+        /*
+          👇 получаем текущего пользователя
+        */
+        const me = await connection.get(
+          "/users/me"
+        );
+
+        localStorage.setItem(
+          "user_id",
+          me.data.id
+        );
+
+        localStorage.setItem(
+          "username",
+          me.data.username
+        );
+
+        console.log(
+          "Current user:",
+          me.data
+        );
+
+        this.$router.push("/");
+
+      } catch (err) {
+        console.error(err);
+
+        this.error =
+          "Неверный логин или пароль";
+      } finally {
+        this.loading = false;
+      }
     },
   },
 };
@@ -94,6 +143,11 @@ export default {
 
 .login-button:hover {
   background-color: #c00;
+}
+
+.login-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .error {
