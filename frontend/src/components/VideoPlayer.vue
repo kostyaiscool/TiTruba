@@ -7,37 +7,94 @@ const props = defineProps({
     type: [String, Number],
     required: true,
   },
+
+  author: {
+    type: String,
+    default: "Unknown",
+  },
 });
 
 const currentUser = ref(
   localStorage.getItem("username")
 );
 
-const videoInfo = ref(null);
-
 const isSubscribed = ref(false);
 
-const videoUrl = computed(() => {
-  return `http://localhost:8000/videos/watch/${props.videoId}`;
+const likes = ref(0);
+const dislikes = ref(0);
+
+const videoInfo = ref({
+  title: "",
+  description: "",
+  author: "",
+  views: 0,
+  created_at: null,
 });
 
 const isOwnChannel = computed(() => {
   return (
     currentUser.value &&
-    videoInfo.value?.author &&
-    currentUser.value === videoInfo.value.author
+    props.author &&
+    currentUser.value === props.author
   );
+});
+
+const videoUrl = computed(() => {
+  return `http://localhost:8000/videos/watch/${props.videoId}`;
 });
 
 const loadVideoInfo = async () => {
   try {
-    const response = await connection.get(
-      `/videos/video_info/${props.videoId}`
-    );
+    const response =
+      await connection.get(
+        `/videos/video_info/${props.videoId}`
+      );
 
     videoInfo.value = response.data;
+  } catch (err) {
+    console.error(err);
+  }
+};
 
-    console.log(response.data);
+const loadRating = async () => {
+  try {
+    const response =
+      await connection.get(
+        `/likes/rating/${props.videoId}`
+      );
+
+    likes.value =
+      response.data.likes;
+
+    dislikes.value =
+      response.data.dislikes;
+
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const likeVideo = async () => {
+  try {
+    await connection.post(
+      `/likes/like/${props.videoId}`
+    );
+
+    await loadRating();
+
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const dislikeVideo = async () => {
+  try {
+    await connection.post(
+      `/likes/dislike/${props.videoId}`
+    );
+
+    await loadRating();
+
   } catch (err) {
     console.error(err);
   }
@@ -45,26 +102,30 @@ const loadVideoInfo = async () => {
 
 const toggleSubscribe = async () => {
   try {
-    if (isOwnChannel.value) return;
+    if (isOwnChannel.value)
+      return;
 
     await connection.post(
-      `/subscribers/subscribe/${videoInfo.value.author}`
+      `/subscribers/subscribe/${props.author}`
     );
 
-    isSubscribed.value = !isSubscribed.value;
+    isSubscribed.value =
+      !isSubscribed.value;
+
   } catch (err) {
     console.error(err);
   }
 };
 
-onMounted(loadVideoInfo);
+onMounted(async () => {
+  await loadVideoInfo();
+  await loadRating();
+});
 </script>
 
 <template>
-  <div
-    v-if="videoInfo"
-    class="video-wrapper"
-  >
+  <div class="video-wrapper">
+
     <video
       class="video-player"
       controls
@@ -76,14 +137,53 @@ onMounted(loadVideoInfo);
       />
     </video>
 
+    <!-- название -->
     <h1 class="video-title">
       {{ videoInfo.title }}
     </h1>
 
+    <!-- просмотры -->
     <div class="video-stats">
-      👁 {{ videoInfo.views }} просмотров
+
+      <span>
+        👁
+        {{ videoInfo.views }}
+        просмотров
+      </span>
+
+      <span>
+        📅
+        {{
+          videoInfo.created_at
+            ? new Date(
+                videoInfo.created_at
+              ).toLocaleDateString()
+            : ""
+        }}
+      </span>
+
     </div>
 
+    <!-- лайки -->
+    <div class="rating-panel">
+
+      <button
+        class="like-btn"
+        @click="likeVideo"
+      >
+        👍 {{ likes }}
+      </button>
+
+      <button
+        class="dislike-btn"
+        @click="dislikeVideo"
+      >
+        👎 {{ dislikes }}
+      </button>
+
+    </div>
+
+    <!-- автор -->
     <div class="video-meta">
 
       <div class="author-info">
@@ -101,12 +201,8 @@ onMounted(loadVideoInfo);
             {{ videoInfo.author }}
           </div>
 
-          <div class="video-date">
-            {{
-              new Date(
-                videoInfo.created_at
-              ).toLocaleDateString()
-            }}
+          <div class="subscribers">
+            channel
           </div>
 
         </div>
@@ -130,8 +226,20 @@ onMounted(loadVideoInfo);
 
     </div>
 
+    <!-- описание -->
     <div class="description-box">
-      {{ videoInfo.description }}
+
+      <h3>
+        Описание
+      </h3>
+
+      <p>
+        {{
+          videoInfo.description ||
+          "Описание отсутствует"
+        }}
+      </p>
+
     </div>
 
   </div>
@@ -151,8 +259,7 @@ onMounted(loadVideoInfo);
 }
 
 .video-title {
-  margin-top: 18px;
-
+  margin-top: 16px;
   font-size: 24px;
   font-weight: bold;
 }
@@ -160,11 +267,42 @@ onMounted(loadVideoInfo);
 .video-stats {
   margin-top: 8px;
 
-  color: #666;
+  display: flex;
+  gap: 18px;
+
+  color: #777;
+}
+
+.rating-panel {
+  display: flex;
+  gap: 12px;
+
+  margin-top: 16px;
+}
+
+.like-btn,
+.dislike-btn {
+  border: none;
+
+  border-radius: 999px;
+
+  padding: 10px 18px;
+
+  cursor: pointer;
+
+  font-weight: bold;
+}
+
+.like-btn {
+  background: #e8ffe8;
+}
+
+.dislike-btn {
+  background: #ffe8e8;
 }
 
 .video-meta {
-  margin-top: 20px;
+  margin-top: 24px;
 
   display: flex;
   justify-content: space-between;
@@ -178,8 +316,8 @@ onMounted(loadVideoInfo);
 }
 
 .avatar {
-  width: 50px;
-  height: 50px;
+  width: 48px;
+  height: 48px;
 
   border-radius: 50%;
 
@@ -190,15 +328,16 @@ onMounted(loadVideoInfo);
   align-items: center;
   justify-content: center;
 
-  font-weight: bold;
   font-size: 20px;
+  font-weight: bold;
 }
 
 .author-name {
+  font-size: 16px;
   font-weight: bold;
 }
 
-.video-date {
+.subscribers {
   color: #777;
   font-size: 13px;
 }
@@ -223,14 +362,16 @@ onMounted(loadVideoInfo);
 }
 
 .description-box {
-  margin-top: 20px;
+  margin-top: 24px;
+
+  background: #f5f5f5;
 
   padding: 16px;
 
   border-radius: 12px;
+}
 
-  background: #f5f5f5;
-
-  white-space: pre-wrap;
+.description-box h3 {
+  margin-bottom: 10px;
 }
 </style>

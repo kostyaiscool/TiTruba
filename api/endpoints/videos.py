@@ -1,13 +1,16 @@
+from typing import Optional
+
 from fastapi import FastAPI, APIRouter, Depends, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import StreamingResponse
 
 from crud.history import HistoryCRUD
+from crud.likescrud import LikesCRUD
 from crud.users import UserCRUD
 from models.vidosi import Vidos
 from modules.auth.models.user import User
-from modules.auth.routers.fastapi_users_endpoints import current_active_user
+from modules.auth.routers.fastapi_users_endpoints import current_active_user, current_optional_user
 from modules.auth.schemas.user import UserRead
 from crud.videos import VideoCRUD
 from db.session import db_helper
@@ -17,7 +20,7 @@ from schemas.vidos import VidosCreate
 router = APIRouter()
 
 @router.get('/watch/{vidid}')
-async def video_view(vidid: int,  session: AsyncSession = Depends(db_helper.session_getter)):
+async def video_view(vidid: int,  session: AsyncSession = Depends(db_helper.session_getter), user: Optional[UserRead] = Depends(current_active_user)):
     # if vidid == '1':
     #     played_video = "C:\\Users\\ilyab\\PycharmProjects\\TiTruba\\vidosi\\vid1.webm"
     #     media_type = "video/webm"
@@ -26,14 +29,17 @@ async def video_view(vidid: int,  session: AsyncSession = Depends(db_helper.sess
     #     media_type = "video/mp4"
     # else:
     #     return JSONResponse(content={"error": "Invalid video ID"}, status_code=404)
-    video = await VideoCRUD.get_video(session, vidid)
-    played_video = video.file_path
-    media_type = video.content_type
-    user = await UserCRUD.get_user_by_name(session, video.author)
-    await HistoryCRUD.add_video_history(session, user.id, vidid)
-    video.views += 1
+    print("семечки есть?")
     print(user)
     print(type(user))
+    video = await VideoCRUD.get_video(session, vidid)
+    if user:
+        await HistoryCRUD.add_video_history(session, user.id, vidid)
+        video.views += 1
+    played_video = video.file_path
+    media_type = video.content_type
+    # user = await UserCRUD.get_user_by_name(session, video.author)
+
     def video_streamer(played_video):
         with open(played_video, "rb") as video_file:
             while chunk := video_file.read(1024 * 1024):  # Читаем по 1MB
@@ -108,3 +114,15 @@ async def get_video_by_author(
 
     return result
 
+# @router.post("/like/{video_id}")
+# async def like_video(
+#     video_id: int,
+#     db: AsyncSession = Depends(...),
+#     user: UserRead = Depends(current_active_user)
+# ):
+#     return await LikesCRUD.rate_video(
+#         db,
+#         user.id,
+#         video_id,
+#         True
+#     )

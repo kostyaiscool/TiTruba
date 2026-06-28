@@ -10,3 +10,4 @@ from modules.auth.models.user import User
 
 fastapi_users_routers = FastAPIUsers[User, int](get_user_manager, [auth_backend])
 current_active_user = fastapi_users_routers.current_user(active=True)
+current_optional_user = fastapi_users_routers.current_user(active=True, optional=True)
