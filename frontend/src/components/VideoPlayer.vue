@@ -56,6 +56,18 @@ const loadVideoInfo = async () => {
   }
 };
 
+const sendWatch = async () => {
+  try {
+    await connection.post(
+      `/videos/watched/${props.videoId}`
+    );
+  } catch (err) {
+    if (err.response?.status !== 401) {
+      console.error(err);
+    }
+  }
+};
+
 const loadRating = async () => {
   try {
     const response =
@@ -119,7 +131,10 @@ const toggleSubscribe = async () => {
 
 onMounted(async () => {
   await loadVideoInfo();
+
   await loadRating();
+
+  await sendWatch();
 });
 </script>
 

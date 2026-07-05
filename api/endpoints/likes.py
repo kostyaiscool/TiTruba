@@ -55,3 +55,13 @@ async def get_rating(
         db,
         video_id,
     )
+
+@router.get("/likes/")
+async def get_likes(
+        user: UserRead = Depends(current_active_user),
+        session: AsyncSession = Depends(db_helper.session_getter),
+):
+    print("до")
+    likes = await LikesCRUD.get_likes_logged(session, user)
+    print("ждевой червь")
+    return likes

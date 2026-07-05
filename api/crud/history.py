@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from crud.users import UserCRUD
 from crud.videos import VideoCRUD
 from models.history import History
+from modules.auth.schemas.user import UserRead
 
 
 class HistoryCRUD():
@@ -35,3 +36,11 @@ class HistoryCRUD():
         await db.refresh(history)
 
         return history
+
+    @staticmethod
+    async def get_history_logged(
+            db: AsyncSession,
+            user: UserRead
+    ):
+        history = await db.execute(select(History).where(History.viewer_id == user.id))
+        return history.scalars().all()

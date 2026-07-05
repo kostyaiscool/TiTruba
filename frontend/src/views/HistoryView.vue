@@ -1,35 +1,37 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { useRouter } from "vue-router";
 import connection from "@/api";
 
 const router = useRouter();
-const route = useRoute();
 
 const history = ref([]);
 
 const loading = ref(true);
-const error = ref(null);
 
-const userId = route.params.user_id;
+const error = ref("");
 
 const loadHistory = async () => {
   try {
     loading.value = true;
 
     const response = await connection.get(
-      `/history/history/${userId}`
+      "/history/history/"
     );
 
     history.value = response.data;
 
-    console.log(response.data);
-
   } catch (err) {
     console.error(err);
 
-    error.value =
-      "Ошибка загрузки истории";
+    if (err.response?.status === 401) {
+      error.value =
+        "Войдите в аккаунт, чтобы посмотреть историю.";
+    } else {
+      error.value =
+        "Ошибка загрузки истории.";
+    }
+
   } finally {
     loading.value = false;
   }
@@ -138,6 +140,7 @@ onMounted(loadHistory);
   background: #f5f5f5;
 
   cursor: pointer;
+
   transition: 0.2s;
 }
 
@@ -146,10 +149,10 @@ onMounted(loadHistory);
 }
 
 .video-avatar {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
 
-  border-radius: 50%;
+  border-radius: 12px;
 
   background: red;
   color: white;
@@ -158,8 +161,7 @@ onMounted(loadHistory);
   align-items: center;
   justify-content: center;
 
-  font-size: 20px;
-  font-weight: bold;
+  font-size: 24px;
 }
 
 .history-info {
@@ -168,18 +170,20 @@ onMounted(loadHistory);
 }
 
 .video-id {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: bold;
 }
 
 .watch-date {
-  font-size: 13px;
-  color: #777;
+  margin-top: 4px;
+  color: gray;
+  font-size: 14px;
 }
 
 .status {
-  padding: 40px;
   text-align: center;
+  margin-top: 30px;
+  font-size: 18px;
 }
 
 .error {

@@ -2,6 +2,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import Likes
+from models.vidosi import Vidos
+from modules.auth.schemas.user import UserRead
 
 
 class LikesCRUD:
@@ -84,3 +86,21 @@ class LikesCRUD:
             "likes": likes_count,
             "dislikes": dislikes_count,
         }
+
+    @staticmethod
+    async def get_likes_logged(
+            db: AsyncSession,
+            user: UserRead
+    ):
+        # genlikes = await db.execute(select(Likes).where(Likes.liker_id == user.id))
+        genlikes = select(Vidos).join(
+            Likes,
+            Likes.video_id == Vidos.id
+        ).where(
+            Likes.liker_id == user.id,
+            Likes.rating == True
+        )
+        genlikes = genlikes.scalars().all()
+        # likes = await db.execute(select(genlikes).where(genlikes.rating == True))
+        print(genlikes)
+        return genlikes

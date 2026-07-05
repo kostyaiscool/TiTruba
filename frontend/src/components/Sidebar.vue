@@ -14,9 +14,9 @@ const userId = localStorage.getItem("user_id");
         </li>
         <li>Библиотека</li>
         <li>
-        <router-link :to="`/history/${userId}`">
-  History
-</router-link>
+        <RouterLink to="/history">
+        История
+        </RouterLink>
         </li>
       </ul>
     </nav>

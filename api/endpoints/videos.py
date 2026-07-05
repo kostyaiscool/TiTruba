@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import FastAPI, APIRouter, Depends, File, UploadFile, Form, HTTPException
+from fastapi import FastAPI, APIRouter, Depends, File, UploadFile, Form, HTTPException, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import StreamingResponse
@@ -19,33 +19,25 @@ from schemas.vidos import VidosCreate
 # app = FastAPI()
 router = APIRouter()
 
-@router.get('/watch/{vidid}')
-async def video_view(vidid: int,  session: AsyncSession = Depends(db_helper.session_getter), user: Optional[UserRead] = Depends(current_active_user)):
-    # if vidid == '1':
-    #     played_video = "C:\\Users\\ilyab\\PycharmProjects\\TiTruba\\vidosi\\vid1.webm"
-    #     media_type = "video/webm"
-    # elif vidid == '2':
-    #     played_video = "C:\\Users\\ilyab\\PycharmProjects\\TiTruba\\vidosi\\vid2.mp4"
-    #     media_type = "video/mp4"
-    # else:
-    #     return JSONResponse(content={"error": "Invalid video ID"}, status_code=404)
-    print("семечки есть?")
-    print(user)
-    print(type(user))
+@router.get("/watch/{vidid}")
+async def video_view(
+    vidid: int,
+    session: AsyncSession = Depends(db_helper.session_getter),
+):
     video = await VideoCRUD.get_video(session, vidid)
-    if user:
-        await HistoryCRUD.add_video_history(session, user.id, vidid)
-        video.views += 1
+
     played_video = video.file_path
     media_type = video.content_type
-    # user = await UserCRUD.get_user_by_name(session, video.author)
 
-    def video_streamer(played_video):
-        with open(played_video, "rb") as video_file:
-            while chunk := video_file.read(1024 * 1024):  # Читаем по 1MB
+    def video_streamer(path):
+        with open(path, "rb") as f:
+            while chunk := f.read(1024 * 1024):
                 yield chunk
-    await session.commit()
-    return StreamingResponse(video_streamer(played_video), media_type=media_type)
+
+    return StreamingResponse(
+        video_streamer(played_video),
+        media_type=media_type,
+    )
 
 @router.get('/videos/{page}')
 async def videos(page: int, db: AsyncSession = Depends(db_helper.session_getter)):
@@ -126,3 +118,30 @@ async def get_video_by_author(
 #         video_id,
 #         True
 #     )
+
+@router.post("/watched/{video_id}")
+async def watched(
+    video_id: int,
+    db: AsyncSession = Depends(db_helper.session_getter),
+    user: UserRead = Depends(current_active_user),
+):
+    print("watched")
+    print(user)
+    video = await VideoCRUD.get_video(
+        db,
+        video_id
+    )
+
+    video.views += 1
+
+    await HistoryCRUD.add_video_history(
+        db,
+        user.id,
+        video_id,
+    )
+
+    await db.commit()
+
+    return {
+        "success": True
+    }
