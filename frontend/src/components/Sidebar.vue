@@ -12,12 +12,9 @@ const userId = localStorage.getItem("user_id");
         Subscriptions
         </router-link>
         </li>
-        <li>Библиотека</li>
-        <li>
-        <RouterLink to="/history">
-        История
-        </RouterLink>
-        </li>
+        <li><RouterLink to="/Library">
+        Библиотека
+        </RouterLink></li>
       </ul>
     </nav>
   </aside>

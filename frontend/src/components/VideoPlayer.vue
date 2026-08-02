@@ -7,11 +7,6 @@ const props = defineProps({
     type: [String, Number],
     required: true,
   },
-
-  author: {
-    type: String,
-    default: "Unknown",
-  },
 });
 
 const currentUser = ref(
@@ -34,8 +29,8 @@ const videoInfo = ref({
 const isOwnChannel = computed(() => {
   return (
     currentUser.value &&
-    props.author &&
-    currentUser.value === props.author
+    videoInfo.value.author &&
+    currentUser.value === videoInfo.value.author
   );
 });
 
@@ -53,6 +48,25 @@ const loadVideoInfo = async () => {
     videoInfo.value = response.data;
   } catch (err) {
     console.error(err);
+  }
+};
+
+const loadSubscription = async () => {
+  try {
+    const response = await connection.get(
+      `/subscribers/status/${videoInfo.value.author}`
+    );
+
+    isSubscribed.value = response.data.subscribed;
+
+  } catch (err) {
+    // Если пользователь не авторизован —
+    // просто считаем, что он не подписан.
+    if (err.response?.status !== 401) {
+      console.error(err);
+    }
+
+    isSubscribed.value = false;
   }
 };
 
@@ -114,15 +128,13 @@ const dislikeVideo = async () => {
 
 const toggleSubscribe = async () => {
   try {
-    if (isOwnChannel.value)
-      return;
+    if (isOwnChannel.value) return;
 
-    await connection.post(
-      `/subscribers/subscribe/${props.author}`
+    const response = await connection.post(
+      `/subscribers/subscribe/${videoInfo.value.author}`
     );
 
-    isSubscribed.value =
-      !isSubscribed.value;
+    isSubscribed.value = response.data.subscribed;
 
   } catch (err) {
     console.error(err);
@@ -131,6 +143,8 @@ const toggleSubscribe = async () => {
 
 onMounted(async () => {
   await loadVideoInfo();
+
+  await loadSubscription();
 
   await loadRating();
 

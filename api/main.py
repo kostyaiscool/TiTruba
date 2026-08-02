@@ -5,7 +5,7 @@ from fastapi import FastAPI
 # from auth.routers.endpoints import auth_router
 # from core.configs import settings
 from db.session import db_helper
-from endpoints import videos, users, subscribers, history, likes
+from endpoints import videos, users, subscribers, history, likes, comments
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -39,6 +39,7 @@ app.include_router(users.router)
 app.include_router(subscribers.router, prefix='/subscribers')
 app.include_router(history.router, prefix='/history')
 app.include_router(likes.router, prefix='/likes')
+app.include_router(comments.router, prefix='/commentaries')
 @app.get('/')
 async def home():
     return {'Ключик': 'IShowSpeed - Лучший стример'}

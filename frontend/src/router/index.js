@@ -10,6 +10,8 @@ import ChannelView from "../views/ChannelView.vue"
 import HistoryView from "../views/HistoryView.vue"
 import LibraryView from "../views/LibraryView.vue"
 import LikedVideosView from "../views/LikedVideosView.vue"
+import DislikedVideosView from "../views/DisikedVideosView.vue"
+import SearchView from "../views/SearchView.vue"
 
 const routes = [
   { path: '/', name: 'Home', component: HomeView },
@@ -23,6 +25,8 @@ const routes = [
   { path: "/history", component: HistoryView},
   { path: "/library", component: LibraryView},
   { path: "/liked", component: LikedVideosView},
+  { path: "/disliked", component: DislikedVideosView},
+  { path: "/search/:query", component: SearchView},
 //{
 //    path: "/disliked",
 //    component: DislikedVideosView,

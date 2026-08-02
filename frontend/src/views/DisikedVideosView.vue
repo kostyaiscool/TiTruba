@@ -14,7 +14,7 @@ const load = async () => {
     try{
 
         const response =
-            await connection.get("/likes/likes");
+            await connection.get("/likes/dislikes");
 
         videos.value =
             response.data;
@@ -44,7 +44,7 @@ onMounted(load);
 
 <div class="page">
 
-<h1>Понравившиеся</h1>
+<h1>Не понравившиеся</h1>
 
 <div
 v-if="loading"
@@ -55,7 +55,7 @@ v-if="loading"
 <div
 v-else-if="videos.length===0"
 >
-Вы ещё ничего не лайкнули.
+Вы ещё ничего не дизлайкнули.
 </div>
 
 <div

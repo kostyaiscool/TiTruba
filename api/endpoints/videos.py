@@ -145,3 +145,34 @@ async def watched(
     return {
         "success": True
     }
+
+@router.get("/search/{search}")
+async def search_vidos(
+        search: str,
+        session: AsyncSession = Depends(db_helper.session_getter)
+):
+    result = await VideoCRUD.search_video(session, search)
+    return result
+
+@router.delete("/delete/{video_id}")
+async def delete_vidos(
+        video_id: int,
+        session: AsyncSession = Depends(db_helper.session_getter),
+):
+    result = await VideoCRUD.delete_vidos(session, video_id)
+    return result
+
+@router.patch('/edit_video/{video_id}')
+async def video_edit(
+    video_id: int,
+    db: AsyncSession = Depends(db_helper.session_getter),
+    title: Optional[str] = None,
+    description: Optional[str] = None
+):
+    video = await VideoCRUD.edit_video(
+        db,
+        video_id,
+        title,
+        description,
+    )
+    return video

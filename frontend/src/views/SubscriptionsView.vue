@@ -97,17 +97,15 @@ onMounted(loadSubscriptions);
 
         <!-- 👤 avatar -->
         <div class="avatar">
-          {{
-            sub.subscribed_to_id
-          }}
+  {{ sub.username.charAt(0).toUpperCase() }}
         </div>
 
         <!-- ℹ️ info -->
         <div class="subscription-info">
 
           <div class="UserId">
-            Channel #{{ sub.subscribed_to_id }}
-          </div>
+  {{ sub.username }}
+           </div>
 
           <div class="subtitle">
             channel

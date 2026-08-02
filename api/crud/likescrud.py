@@ -90,17 +90,39 @@ class LikesCRUD:
     @staticmethod
     async def get_likes_logged(
             db: AsyncSession,
-            user: UserRead
+            user: UserRead,
     ):
-        # genlikes = await db.execute(select(Likes).where(Likes.liker_id == user.id))
-        genlikes = select(Vidos).join(
-            Likes,
-            Likes.video_id == Vidos.id
-        ).where(
-            Likes.liker_id == user.id,
-            Likes.rating == True
+        result = await db.execute(
+            select(Vidos)
+            .join(Likes, Likes.video_id == Vidos.id)
+            .where(
+                Likes.liker_id == user.id,
+                Likes.rating == True
+            )
         )
-        genlikes = genlikes.scalars().all()
-        # likes = await db.execute(select(genlikes).where(genlikes.rating == True))
-        print(genlikes)
-        return genlikes
+
+        videos = result.scalars().all()
+
+        print(videos)
+
+        return videos
+
+    @staticmethod
+    async def get_dislikes_logged(
+            db: AsyncSession,
+            user: UserRead,
+    ):
+        result = await db.execute(
+            select(Vidos)
+            .join(Likes, Likes.video_id == Vidos.id)
+            .where(
+                Likes.liker_id == user.id,
+                Likes.rating == False
+            )
+        )
+
+        videos = result.scalars().all()
+
+        print(videos)
+
+        return videos

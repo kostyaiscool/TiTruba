@@ -4,9 +4,12 @@ from sqlalchemy.orm import declarative_base, Mapped, mapped_column, relationship
 from db.session import Base
 from typing import TYPE_CHECKING, List
 
+from models.videotag import VideoTag
+
 if TYPE_CHECKING:
     from models.likes import Likes
-
+    from models.commentaries import Comments
+    from models.history import History
 
 class Vidos(Base):
     name: Mapped[str] = mapped_column(String)
@@ -24,4 +27,16 @@ class Vidos(Base):
     likes: Mapped[List["Likes"]] = relationship(
         back_populates="video",
         cascade="all, delete-orphan",
+    )
+    comments: Mapped[List["Comments"]] = relationship(
+        back_populates="video",
+        cascade="all, delete-orphan",
+    )
+    history: Mapped[List["History"]] = relationship(
+        back_populates="video",
+        cascade="all, delete-orphan"
+    )
+    tags: Mapped[List["VideoTag"]] = relationship(
+        back_populates="video",
+        cascade="all, delete-orphan"
     )

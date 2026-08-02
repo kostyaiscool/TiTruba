@@ -1,18 +1,20 @@
 import datetime
+import os
 import time
 from pathlib import Path
 from uuid import uuid4
 
 from fastapi import UploadFile, Depends
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, delete, Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List, Union, Optional
 
 from crud.users import UserCRUD
 from db.session import db_helper
 from models.history import History
 from models.vidosi import Vidos
 from modules.auth.models.user import User
-from schemas.vidos import VidosCreate
+import schemas.vidos
 
 VIDEO_DIR = Path("media/videos")
 VIDEO_DIR.mkdir(parents=True, exist_ok=True)
@@ -39,7 +41,6 @@ class VideoCRUD():
     async def get_video(db: AsyncSession, id: int):
         video = await db.execute(select(Vidos).where(Vidos.id == id))
         video = video.scalars().one()
-        await db.commit()
         return video
 
     # @staticmethod
@@ -124,3 +125,79 @@ class VideoCRUD():
         result = await session.add(history)
         session.commit()
         return result
+
+    # @staticmethod
+    # async def search_video(session: AsyncSession, video_name: str) -> List[Vidos]:
+    #         print(video_name)
+    #         query = select(Vidos).where(
+    #             Vidos.public_name.ilike(f"%{video_name}%")
+    #         )
+    #         result = await session.execute(query)
+    #         finalresult = result.scalars().all()
+    #         print(finalresult)
+    #         return finalresult
+
+    @staticmethod
+    async def search_video(
+            session: AsyncSession,
+            video_name: str
+    ) -> List[Vidos]:
+        result = await session.execute(
+            select(Vidos).where(
+                Vidos.public_name.ilike(f"%{video_name}%")
+            )
+        )
+
+        return list(result.scalars().all())
+
+    # @staticmethod
+    # async def delete_vidos(
+    #         session: AsyncSession,
+    #         video_id: int,
+    # ):
+    #     video = await VideoCRUD.get_video(session, video_id)
+    #     video_l = Union[video]
+    #     result = await session.execute(delete(video_l))
+    #     await session.commit()
+    #     os.remove(video.file_path)
+    #     return result
+    @staticmethod
+    async def delete_vidos(
+            session: AsyncSession,
+            video_id: int,
+    ):
+        video = await VideoCRUD.get_video(session, video_id)
+
+        if video is None:
+            return None
+
+        await session.delete(video)
+        await session.commit()
+
+        if os.path.exists(video.file_path):
+            os.remove(video.file_path)
+
+        return True
+
+    @staticmethod
+    async def edit_video(
+            session: AsyncSession,
+            video_id: int,
+            title: Optional[str],
+            description: Optional[str],
+    ):
+        video = await VideoCRUD.get_video(session, video_id)
+
+        if video is None:
+            return None
+
+        if title is not None:
+            video.public_name = title
+
+        if description is not None:
+            video.desc = description
+
+        await session.commit()
+        await session.refresh(video)
+
+        return video

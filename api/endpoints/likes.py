@@ -58,10 +58,14 @@ async def get_rating(
 
 @router.get("/likes/")
 async def get_likes(
-        user: UserRead = Depends(current_active_user),
-        session: AsyncSession = Depends(db_helper.session_getter),
+    user: UserRead = Depends(current_active_user),
+    session: AsyncSession = Depends(db_helper.session_getter),
 ):
-    print("до")
-    likes = await LikesCRUD.get_likes_logged(session, user)
-    print("ждевой червь")
-    return likes
+    return await LikesCRUD.get_likes_logged(session, user)
+
+@router.get("/dislikes/")
+async def get_dislikes(
+    user: UserRead = Depends(current_active_user),
+    session: AsyncSession = Depends(db_helper.session_getter),
+):
+    return await LikesCRUD.get_dislikes_logged(session, user)

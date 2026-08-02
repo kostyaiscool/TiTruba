@@ -4,9 +4,11 @@ from sqlalchemy import ForeignKey, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.session import Base
+
 if TYPE_CHECKING:
     from modules.auth.models.user import User
     from models.vidosi import Vidos
+    from models.commentaries import Comments
 
 
 class Likes(Base):
