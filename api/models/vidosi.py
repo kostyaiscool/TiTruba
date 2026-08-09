@@ -2,20 +2,22 @@ from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.orm import declarative_base, Mapped, mapped_column, relationship
 
 from db.session import Base
-from typing import TYPE_CHECKING, List
-
-from models.videotag import VideoTag
+from typing import TYPE_CHECKING, List, Optional
 
 if TYPE_CHECKING:
     from models.likes import Likes
     from models.commentaries import Comments
     from models.history import History
+    from models.videotag import VideoTag
 
 class Vidos(Base):
     name: Mapped[str] = mapped_column(String)
     public_name: Mapped[str] = mapped_column(String, default="Хаммам")
     desc: Mapped[str] = mapped_column(String, nullable=True)
     author: Mapped[str] = mapped_column(String(50))
+    author_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id")
+    )
     file_path: Mapped[str] = mapped_column(String(500))
     file_size: Mapped[int] = mapped_column(Integer)
     content_type: Mapped[str] = mapped_column(String(100))
@@ -36,7 +38,11 @@ class Vidos(Base):
         back_populates="video",
         cascade="all, delete-orphan"
     )
-    tags: Mapped[List["VideoTag"]] = relationship(
+    # tags: Mapped[List["VideoTag"]] = relationship(
+    #     back_populates="video",
+    #     cascade="all, delete-orphan"
+    # )
+    video_tags: Mapped[List["VideoTag"]] = relationship(
         back_populates="video",
         cascade="all, delete-orphan"
     )

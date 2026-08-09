@@ -1,8 +1,10 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-
-from models.tag import Tag
-from models.vidosi import Vidos
+if TYPE_CHECKING:
+    from models.tag import Tag
+    from models.vidosi import Vidos
 from modules.core.base import Base
 
 
@@ -17,7 +19,7 @@ class VideoTag(Base):
     )
 
     video: Mapped["Vidos"] = relationship(
-        back_populates="tags"
+        back_populates="video_tags"
     )
 
     tag: Mapped["Tag"] = relationship(

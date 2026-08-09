@@ -1,9 +1,10 @@
-from typing import List
+from typing import List, TYPE_CHECKING
 
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models.videotag import VideoTag
+if TYPE_CHECKING:
+    from models.videotag import VideoTag
 from modules.core.base import Base
 
 
