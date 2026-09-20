@@ -1,5 +1,11 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import {
+  ref,
+  computed,
+  onMounted,
+  onUnmounted,
+} from "vue";
+
 import connection from "@/api";
 
 const props = defineProps({
@@ -9,14 +15,38 @@ const props = defineProps({
   },
 });
 
+/*
+|--------------------------------------------------------------------------
+| Пользователь
+|--------------------------------------------------------------------------
+*/
+
 const currentUser = ref(
   localStorage.getItem("username")
 );
 
+/*
+|--------------------------------------------------------------------------
+| Подписка
+|--------------------------------------------------------------------------
+*/
+
 const isSubscribed = ref(false);
+
+/*
+|--------------------------------------------------------------------------
+| Рейтинг
+|--------------------------------------------------------------------------
+*/
 
 const likes = ref(0);
 const dislikes = ref(0);
+
+/*
+|--------------------------------------------------------------------------
+| Информация о видео
+|--------------------------------------------------------------------------
+*/
 
 const videoInfo = ref({
   title: "",
@@ -24,6 +54,16 @@ const videoInfo = ref({
   author: "",
   views: 0,
   created_at: null,
+});
+
+/*
+|--------------------------------------------------------------------------
+| Видео
+|--------------------------------------------------------------------------
+*/
+
+const videoUrl = computed(() => {
+  return `http://localhost:8000/videos/watch/${props.videoId}`;
 });
 
 const isOwnChannel = computed(() => {
@@ -34,9 +74,307 @@ const isOwnChannel = computed(() => {
   );
 });
 
-const videoUrl = computed(() => {
-  return `http://localhost:8000/videos/watch/${props.videoId}`;
-});
+/*
+|--------------------------------------------------------------------------
+| Просмотр видео
+|--------------------------------------------------------------------------
+|
+| Мы храним интервалы реально просмотренного видео.
+|
+| Например:
+|
+| 0 -> 10
+| 10 -> 20
+| перемотка -> 100
+| 100 -> 110
+|
+| Результат:
+|
+| 0-20 + 100-110 = 30 секунд
+|
+| Перемотка вперед не считается просмотром.
+|--------------------------------------------------------------------------
+*/
+
+const watchedIntervals = ref([]);
+
+const lastVideoTime = ref(0);
+const isVideoInitialized = ref(false);
+
+/*
+|--------------------------------------------------------------------------
+| Добавление просмотренного интервала
+|--------------------------------------------------------------------------
+*/
+
+const addWatchedInterval = (start, end) => {
+  if (end <= start) {
+    return;
+  }
+
+  watchedIntervals.value.push({
+    start,
+    end,
+  });
+
+  /*
+  |--------------------------------------------------------------------------
+  | Объединяем пересекающиеся интервалы
+  |--------------------------------------------------------------------------
+  */
+
+  const intervals = [...watchedIntervals.value]
+    .sort((a, b) => a.start - b.start);
+
+  const merged = [];
+
+  for (const interval of intervals) {
+    const last = merged[merged.length - 1];
+
+    if (!last || interval.start > last.end) {
+      merged.push({
+        start: interval.start,
+        end: interval.end,
+      });
+    } else {
+      last.end = Math.max(
+        last.end,
+        interval.end
+      );
+    }
+  }
+
+  watchedIntervals.value = merged;
+};
+
+/*
+|--------------------------------------------------------------------------
+| Получение общего количества реально просмотренных секунд
+|--------------------------------------------------------------------------
+*/
+
+const getWatchedSeconds = () => {
+  return watchedIntervals.value.reduce(
+    (total, interval) => {
+      return total + (interval.end - interval.start);
+    },
+    0
+  );
+};
+
+/*
+|--------------------------------------------------------------------------
+| Отслеживание времени видео
+|--------------------------------------------------------------------------
+*/
+
+const updateWatchTime = (event) => {
+  const currentTime = event.target.currentTime;
+
+  if (!isVideoInitialized.value) {
+    lastVideoTime.value = currentTime;
+    isVideoInitialized.value = true;
+    return;
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Нормальное воспроизведение
+  |--------------------------------------------------------------------------
+  |
+  | Если время увеличилось незначительно,
+  | считаем этот интервал просмотренным.
+  |
+  */
+
+  if (currentTime > lastVideoTime.value) {
+    const difference =
+      currentTime - lastVideoTime.value;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Защита от перемотки вперед
+    |--------------------------------------------------------------------------
+    |
+    | timeupdate обычно вызывается несколько раз в секунду.
+    | Если скачок слишком большой, скорее всего пользователь перемотал видео.
+    |
+    */
+
+    if (difference <= 2) {
+      addWatchedInterval(
+        lastVideoTime.value,
+        currentTime
+      );
+    }
+  }
+
+  lastVideoTime.value = currentTime;
+};
+
+/*
+|--------------------------------------------------------------------------
+| Отправка просмотра
+|--------------------------------------------------------------------------
+*/
+
+const sendWatched = async () => {
+  const watchedSeconds = getWatchedSeconds();
+
+  console.log(
+    "Отправляем просмотр:",
+    watchedSeconds,
+    "секунд"
+  );
+
+  /*
+  |--------------------------------------------------------------------------
+  | Ничего не отправляем, если видео фактически не смотрели
+  |--------------------------------------------------------------------------
+  */
+
+  if (watchedSeconds <= 0) {
+    console.log(
+      "Видео фактически не смотрели"
+    );
+
+    return;
+  }
+
+  const token =
+    localStorage.getItem("token");
+
+  /*
+  |--------------------------------------------------------------------------
+  | Пользователь не авторизован
+  |--------------------------------------------------------------------------
+  */
+
+  if (!token) {
+    console.log(
+      "Пользователь не авторизован, просмотр не отправляется"
+    );
+
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `http://localhost:8000/videos/watched/${props.videoId}`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+
+        body: JSON.stringify({
+          watched_seconds: watchedSeconds,
+        }),
+
+        /*
+        |--------------------------------------------------------------------------
+        | Очень важно при уходе со страницы
+        |--------------------------------------------------------------------------
+        |
+        | Браузер постарается завершить запрос,
+        | даже если страница закрывается.
+        |
+        */
+
+        keepalive: true,
+      }
+    );
+
+    console.log(
+      "watched status:",
+      response.status
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Не обязательно читать response body.
+    |--------------------------------------------------------------------------
+    */
+
+    if (!response.ok) {
+      console.error(
+        "Ошибка сохранения просмотра:",
+        response.status
+      );
+
+      return;
+    }
+
+    console.log(
+      "Просмотр успешно сохранён"
+    );
+
+  } catch (err) {
+    /*
+    |--------------------------------------------------------------------------
+    | Ошибка сети не должна ломать приложение
+    |--------------------------------------------------------------------------
+    */
+
+    console.error(
+      "Ошибка отправки watched:",
+      err
+    );
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| Защита от повторной отправки
+|--------------------------------------------------------------------------
+*/
+
+let watchedSent = false;
+
+const sendWatchedOnce = () => {
+  if (watchedSent) {
+    return;
+  }
+
+  watchedSent = true;
+
+  /*
+  |--------------------------------------------------------------------------
+  | Намеренно не await.
+  |
+  | Компонент/страница уже покидается.
+  |--------------------------------------------------------------------------
+  */
+
+  void sendWatched();
+};
+
+/*
+|--------------------------------------------------------------------------
+| Отслеживание ухода со страницы /watch
+|--------------------------------------------------------------------------
+|
+| Важно:
+|
+| Мы не просто полагаемся на onUnmounted.
+| Проверяем текущий URL.
+|
+| Если компонент будет размонтирован по другой причине,
+| просмотр не отправится.
+|--------------------------------------------------------------------------
+*/
+
+const handleBeforeUnload = () => {
+  sendWatchedOnce();
+};
+
+/*
+|--------------------------------------------------------------------------
+| Информация о видео
+|--------------------------------------------------------------------------
+*/
 
 const loadVideoInfo = async () => {
   try {
@@ -45,42 +383,83 @@ const loadVideoInfo = async () => {
         `/videos/video_info/${props.videoId}`
       );
 
-    videoInfo.value = response.data;
+    videoInfo.value =
+      response.data;
+
   } catch (err) {
-    console.error(err);
+    console.error(
+      "Ошибка загрузки информации о видео:",
+      err
+    );
   }
 };
 
-const loadSubscription = async () => {
-  try {
-    const response = await connection.get(
-      `/subscribers/status/${videoInfo.value.author}`
-    );
+/*
+|--------------------------------------------------------------------------
+| Подписка
+|--------------------------------------------------------------------------
+*/
 
-    isSubscribed.value = response.data.subscribed;
+const loadSubscription = async () => {
+  /*
+  |--------------------------------------------------------------------------
+  | Пока автор видео неизвестен,
+  | запрос отправлять нельзя.
+  |--------------------------------------------------------------------------
+  */
+
+  if (!videoInfo.value.author) {
+    return;
+  }
+
+  try {
+    const response =
+      await connection.get(
+        `/subscribers/status/${videoInfo.value.author}`
+      );
+
+    isSubscribed.value =
+      response.data.subscribed;
 
   } catch (err) {
-    // Если пользователь не авторизован —
-    // просто считаем, что он не подписан.
     if (err.response?.status !== 401) {
-      console.error(err);
+      console.error(
+        "Ошибка проверки подписки:",
+        err
+      );
     }
 
     isSubscribed.value = false;
   }
 };
 
-const sendWatch = async () => {
+const toggleSubscribe = async () => {
   try {
-    await connection.post(
-      `/videos/watched/${props.videoId}`
-    );
-  } catch (err) {
-    if (err.response?.status !== 401) {
-      console.error(err);
+    if (isOwnChannel.value) {
+      return;
     }
+
+    const response =
+      await connection.post(
+        `/subscribers/subscribe/${videoInfo.value.author}`
+      );
+
+    isSubscribed.value =
+      response.data.subscribed;
+
+  } catch (err) {
+    console.error(
+      "Ошибка подписки:",
+      err
+    );
   }
 };
+
+/*
+|--------------------------------------------------------------------------
+| Лайки
+|--------------------------------------------------------------------------
+*/
 
 const loadRating = async () => {
   try {
@@ -96,7 +475,10 @@ const loadRating = async () => {
       response.data.dislikes;
 
   } catch (err) {
-    console.error(err);
+    console.error(
+      "Ошибка загрузки рейтинга:",
+      err
+    );
   }
 };
 
@@ -109,7 +491,10 @@ const likeVideo = async () => {
     await loadRating();
 
   } catch (err) {
-    console.error(err);
+    console.error(
+      "Ошибка лайка:",
+      err
+    );
   }
 };
 
@@ -122,33 +507,102 @@ const dislikeVideo = async () => {
     await loadRating();
 
   } catch (err) {
-    console.error(err);
-  }
-};
-
-const toggleSubscribe = async () => {
-  try {
-    if (isOwnChannel.value) return;
-
-    const response = await connection.post(
-      `/subscribers/subscribe/${videoInfo.value.author}`
+    console.error(
+      "Ошибка дизлайка:",
+      err
     );
-
-    isSubscribed.value = response.data.subscribed;
-
-  } catch (err) {
-    console.error(err);
   }
 };
+
+/*
+|--------------------------------------------------------------------------
+| Lifecycle
+|--------------------------------------------------------------------------
+*/
 
 onMounted(async () => {
+  console.log(
+    "VideoPlayer mounted:",
+    props.videoId
+  );
+
+  /*
+  |--------------------------------------------------------------------------
+  | Отслеживаем закрытие/уход со страницы
+  |--------------------------------------------------------------------------
+  */
+
+  window.addEventListener(
+    "beforeunload",
+    handleBeforeUnload
+  );
+
+  /*
+  |--------------------------------------------------------------------------
+  | Загружаем информацию о видео
+  |--------------------------------------------------------------------------
+  */
+
   await loadVideoInfo();
+
+  /*
+  |--------------------------------------------------------------------------
+  | Теперь автор уже известен
+  |--------------------------------------------------------------------------
+  */
 
   await loadSubscription();
 
-  await loadRating();
+  /*
+  |--------------------------------------------------------------------------
+  | Загружаем рейтинг
+  |--------------------------------------------------------------------------
+  */
 
-  await sendWatch();
+  await loadRating();
+});
+
+onUnmounted(() => {
+  console.log(
+    "VideoPlayer unmounted"
+  );
+
+  window.removeEventListener(
+    "beforeunload",
+    handleBeforeUnload
+  );
+
+  /*
+  |--------------------------------------------------------------------------
+  | Проверяем, действительно ли мы покидаем /watch
+  |--------------------------------------------------------------------------
+  |
+  | Это важно для Vue Router.
+  |
+  | Если компонент размонтировался по другой причине,
+  | запрос не отправляем.
+  |
+  */
+
+  const currentPath =
+    window.location.pathname;
+
+  const isWatchPage =
+    currentPath.startsWith("/watch");
+
+  if (isWatchPage) {
+    console.log(
+      "Остались на странице /watch — просмотр пока не отправляем"
+    );
+
+    return;
+  }
+
+  console.log(
+    "Пользователь покинул /watch — отправляем просмотр"
+  );
+
+  sendWatchedOnce();
 });
 </script>
 
@@ -159,6 +613,7 @@ onMounted(async () => {
       class="video-player"
       controls
       autoplay
+      @timeupdate="updateWatchTime"
     >
       <source
         :src="videoUrl"
@@ -166,12 +621,10 @@ onMounted(async () => {
       />
     </video>
 
-    <!-- название -->
     <h1 class="video-title">
       {{ videoInfo.title }}
     </h1>
 
-    <!-- просмотры -->
     <div class="video-stats">
 
       <span>
@@ -193,7 +646,6 @@ onMounted(async () => {
 
     </div>
 
-    <!-- лайки -->
     <div class="rating-panel">
 
       <button
@@ -212,7 +664,6 @@ onMounted(async () => {
 
     </div>
 
-    <!-- автор -->
     <div class="video-meta">
 
       <div class="author-info">
@@ -255,7 +706,6 @@ onMounted(async () => {
 
     </div>
 
-    <!-- описание -->
     <div class="description-box">
 
       <h3>
@@ -289,6 +739,7 @@ onMounted(async () => {
 
 .video-title {
   margin-top: 16px;
+
   font-size: 24px;
   font-weight: bold;
 }
@@ -312,13 +763,11 @@ onMounted(async () => {
 .like-btn,
 .dislike-btn {
   border: none;
-
   border-radius: 999px;
 
   padding: 10px 18px;
 
   cursor: pointer;
-
   font-weight: bold;
 }
 
@@ -381,7 +830,6 @@ onMounted(async () => {
   color: white;
 
   cursor: pointer;
-
   font-weight: bold;
 }
 

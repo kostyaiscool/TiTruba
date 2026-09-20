@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Integer
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 if TYPE_CHECKING:
     from models.tag import Tag

@@ -5,14 +5,14 @@ from models import Tag
 
 
 class TagCRUD():
-    # @staticmethod
-    # async def get_tags(
-    #         db: AsyncSession,
-    # ):
-    #     result = await db.execute(
-    #         select(Tag)
-    #     )
-    #     return result.scalars().all()
+    @staticmethod
+    async def get_tags(
+            db: AsyncSession,
+    ):
+        result = await db.execute(
+            select(Tag)
+        )
+        return result.scalars().all()
 
     @staticmethod
     async def get_tag(db: AsyncSession, id: int):

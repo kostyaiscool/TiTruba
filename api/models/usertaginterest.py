@@ -24,3 +24,4 @@ class UserTagInterest(Base):
     user: Mapped["User"] = relationship()
 
     tag: Mapped["Tag"] = relationship()
+

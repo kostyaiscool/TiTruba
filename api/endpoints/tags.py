@@ -6,6 +6,13 @@ from db.session import db_helper
 
 router = APIRouter()
 
+@router.get("/all")
+async def get_tag(
+        session: AsyncSession = Depends(db_helper.session_getter)
+):
+    tags = await TagCRUD.get_tags(session)
+    return tags
+
 @router.get("/tags/{tag_id}")
 async def get_tag(
         tag_id: int,

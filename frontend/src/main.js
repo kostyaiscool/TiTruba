@@ -11,6 +11,4 @@ const { checkAuth } = useAuth();
 app.use(router);
 app.mount('#app');
 
-onMounted(() => {
-  checkAuth();
-});
+checkAuth();

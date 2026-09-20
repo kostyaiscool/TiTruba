@@ -46,3 +46,4 @@ class Vidos(Base):
         back_populates="video",
         cascade="all, delete-orphan"
     )
+    length: Mapped[int] = mapped_column(Integer)
