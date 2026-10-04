@@ -4,6 +4,10 @@ from sqlalchemy import pool
 from logging.config import fileConfig
 from alembic import context
 
+# модели должны быть импортированы, иначе autogenerate видит пустые метаданные
+import models
+import modules.auth.models.user
+import modules.auth.models.access_token
 from modules.core.base import Base
 from modules.core.configs import settings
 

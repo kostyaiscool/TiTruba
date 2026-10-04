@@ -48,7 +48,7 @@ export default {
       this.error = null;
 
       try {
-        const response = await connection.post("/auth/auth/register", {
+        const response = await connection.post("/auth/register", {
           email: this.email,
           password: this.password,
           username: this.username

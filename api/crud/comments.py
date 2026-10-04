@@ -3,7 +3,7 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.commentaries import Comments
-from schemas.commentaries import CommentCreate, Comment
+from schemas.commentaries import CommentCreate
 
 
 class CommentCRUD():
@@ -26,7 +26,13 @@ class CommentCRUD():
 
     @staticmethod
     async def create(session: AsyncSession, comm_data: CommentCreate):
-        comment = Comment(**comm_data.dict())
+        comment = Comments(
+            text=comm_data.text,
+            video_id=comm_data.video_id,
+            parent_id=comm_data.reply_to_id,
+            author=comm_data.author.username,
+            author_id=comm_data.author.id,
+        )
         session.add(comment)
 
         await session.commit()
@@ -40,7 +46,7 @@ class CommentCRUD():
             parent_id: int
     ):
         try:
-            result = await session.execute(select(Comment).where(Comment.parent_id == parent_id))
+            result = await session.execute(select(Comments).where(Comments.parent_id == parent_id))
             return result.scalars().all()
         except NoResultFound:
             return None

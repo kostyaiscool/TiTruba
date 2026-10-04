@@ -29,7 +29,7 @@ class Comments(Base):
     #     back_populates="comment",
     #     cascade="all, delete-orphan",
     # )
-    creation_date: Mapped[str] = mapped_column(DateTime, default=datetime.now)
+    creation_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     author_id: Mapped[int] = mapped_column(
         ForeignKey("users.id"),
         nullable=False

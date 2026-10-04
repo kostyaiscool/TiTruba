@@ -66,7 +66,7 @@ export default {
         );
 
         const response = await connection.post(
-          "/auth/auth/login",
+          "/auth/login",
           formData
         );
 

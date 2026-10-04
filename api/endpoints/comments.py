@@ -7,6 +7,7 @@ from crud.comments import CommentCRUD
 from db.session import db_helper
 from modules.auth.models.user import User
 from modules.auth.routers.fastapi_users_endpoints import current_active_user
+from modules.auth.schemas.user import UserRead
 from schemas.commentaries import CommentCreate
 
 router = APIRouter()
@@ -31,7 +32,7 @@ async def save_comment(
         text=text,
         video_id=vidid,
         reply_to_id=reply_to_id,
-        author=author
+        author=UserRead.model_validate(author, from_attributes=True)
     ))
     return comment
 

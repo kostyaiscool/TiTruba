@@ -23,6 +23,8 @@ class HistoryCRUD():
             video_id: int
     ):
         video = await VideoCRUD.get_video(db, video_id)
+        if video is None:
+            return None
         user = await UserCRUD.get_user_by_id(db, viewer_id)
         history = History(
             viewer_id=viewer_id,

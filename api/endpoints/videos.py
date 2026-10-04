@@ -27,6 +27,11 @@ async def video_view(
     session: AsyncSession = Depends(db_helper.session_getter),
 ):
     video = await VideoCRUD.get_video(session, vidid)
+    if not video:
+        raise HTTPException(
+            status_code=404,
+            detail="Видео не найдено"
+        )
 
     played_video = video.file_path
     media_type = video.content_type
@@ -67,6 +72,7 @@ async def video_upload(
         title,
         description,
         author_name,
+        current_user.id,
         tag_ids,
     )
 
@@ -83,6 +89,11 @@ async def video_info(
         db,
         video_id
     )
+    if not video:
+        raise HTTPException(
+            status_code=404,
+            detail="Видео не найдено"
+        )
     tags = await VideoTagCRUD.get_tags_by_videos(db,video.id)
     print("зумерские зумерочки")
     print(video.views)
@@ -106,7 +117,7 @@ async def video_info(
 async def get_video_by_author(
     author_id: int,
     session: AsyncSession = Depends(
-        db_helper.get_session
+        db_helper.session_getter
     )
 ):
     result = await VideoCRUD.get_video_by_author(
@@ -267,6 +278,11 @@ async def delete_vidos(
         session: AsyncSession = Depends(db_helper.session_getter),
 ):
     result = await VideoCRUD.delete_vidos(session, video_id)
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Видео не найдено"
+        )
     return result
 
 @router.patch('/edit_video/{video_id}')
@@ -282,4 +298,9 @@ async def video_edit(
         title,
         description,
     )
+    if video is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Видео не найдено"
+        )
     return video
