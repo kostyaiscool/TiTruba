@@ -18,5 +18,5 @@ class Comment(BaseModel):
 class CommentCreate(BaseModel):
     text: str
     video_id: int
-    reply_to_id: Optional[int]
+    reply_to_id: Optional[int] = None
     author: UserRead

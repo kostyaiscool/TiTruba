@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
@@ -10,6 +10,10 @@ from modules.core.base import Base
 
 
 class RolePermission(Base):
+    __table_args__ = (
+        UniqueConstraint("role_id", "permission_id"),
+    )
+
     role_id: Mapped[int] = mapped_column(
         ForeignKey("roles.id", ondelete="CASCADE")
     )

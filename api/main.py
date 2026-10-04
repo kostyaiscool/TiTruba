@@ -34,7 +34,7 @@ app.add_middleware(
 )
 
 app.include_router(videos.router, prefix='/videos')
-app.include_router(auth_router, prefix="/auth")
+app.include_router(auth_router)
 app.include_router(users.router)
 app.include_router(subscribers.router, prefix='/subscribers')
 app.include_router(history.router, prefix='/history')

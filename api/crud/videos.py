@@ -48,7 +48,7 @@ class VideoCRUD():
     @staticmethod
     async def get_video(db: AsyncSession, id: int):
         video = await db.execute(select(Vidos).where(Vidos.id == id))
-        video = video.scalars().one()
+        video = video.scalars().one_or_none()
         return video
 
     # @staticmethod
@@ -75,6 +75,7 @@ class VideoCRUD():
             title: str,
             description: str,
             author: str,
+            author_id: int,
             tag_ids: List[int],
     ) -> Vidos:
 
@@ -97,6 +98,7 @@ class VideoCRUD():
             file_size=len(content),
             content_type=file.content_type,
             author=author,
+            author_id=author_id,
             length=duration,
         )
 
@@ -181,9 +183,9 @@ class VideoCRUD():
             viewer_id=user_id,
             video_id=video_id,
         )
-        result = await session.add(history)
-        session.commit()
-        return result
+        session.add(history)
+        await session.commit()
+        return history
 
     # @staticmethod
     # async def search_video(session: AsyncSession, video_name: str) -> List[Vidos]:
@@ -333,11 +335,11 @@ class VideoCRUD():
         )
         result = await db.execute(
             select(Vidos)
-            .order_by(Vidos.created_at.desc())
+            .order_by(priority.desc(), Vidos.created_at.desc())
             .offset(offset)
             .limit(per_page)
         )
-        videos = result.scalars().all()
+        videos = list(result.scalars().all())
         random_count = round(len(videos) * 0.1)
 
         if random_count:

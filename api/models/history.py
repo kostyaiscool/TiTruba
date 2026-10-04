@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, Float, Boolean
+from sqlalchemy import ForeignKey, Float, Boolean, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.session import Base
@@ -25,6 +25,7 @@ class History(Base):
 
     video: Mapped["Vidos"] = relationship(
         foreign_keys=[video_id],
+        back_populates="history",
     )
     watch_percent: Mapped[float] = mapped_column(
         Float,
@@ -36,4 +37,7 @@ class History(Base):
         nullable=True
     )
 
-    watched_at: Mapped[datetime]
+    watched_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )

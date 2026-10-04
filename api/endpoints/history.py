@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from crud.history import HistoryCRUD
@@ -23,6 +23,11 @@ async def add_video_user_history(
         session: AsyncSession = Depends(db_helper.session_getter),
 ):
     history = await HistoryCRUD.add_video_history(session, viewer_id, video_id)
+    if history is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Видео не найдено"
+        )
     return history
 
 @router.get("/history/")

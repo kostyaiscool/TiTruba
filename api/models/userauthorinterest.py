@@ -9,7 +9,7 @@ class UserAuthorInterest(Base):
         ForeignKey("users.id", ondelete="CASCADE")
     )
     author_id: Mapped[int] = mapped_column(
-        ForeignKey("vidoss.author_id", ondelete="CASCADE")
+        ForeignKey("users.id", ondelete="CASCADE")
     )
     weight: Mapped[float] = mapped_column(
         Float,

@@ -1,14 +1,16 @@
-from typing import TYPE_CHECKING, List
+from typing import List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
-if TYPE_CHECKING:
-    from schemas.permissions import PermissionRead
+from schemas.permissions import PermissionRead
+
 
 class RoleRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
-    permission: List[PermissionRead]
+    permissions: List[PermissionRead] = []
 
 class RoleCreate(BaseModel):
     name: str
